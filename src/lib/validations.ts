@@ -142,3 +142,44 @@ export const providerVerificationSchema = z.object({
   documentUrl: z.string().min(5, "Document verification URL or reference ID is required."),
   notes: z.string().optional(),
 });
+
+export const surplusMedicineListingSchema = z.object({
+  medicineName: z.string().min(2, "Medicine name is required."),
+  dosage: z.string().min(1, "Dosage/strength is required (e.g. 500mg)."),
+  manufacturer: z.string().optional(),
+  category: z.string().min(2, "Category is required (e.g. Antibiotic, Diabetes, Cardiac)."),
+  mrpPrice: z.coerce.number().min(1, "Original MRP must be greater than 0."),
+  offeredPrice: z.coerce.number().min(0, "Offered price cannot be negative."),
+  quantityRemaining: z.string().min(1, "Quantity remaining is required (e.g. 1 Strip / 10 Tablets)."),
+  expiryDate: z.string().min(1, "Expiry date is mandatory."),
+  batchNumber: z.string().min(2, "Batch number printed on packaging is required."),
+  packagingCondition: z.enum(["sealed_blister", "unopened_bottle", "intact_box"], {
+    errorMap: () => ({ message: "Please specify verified packaging condition." }),
+  }),
+  city: z.string().min(2, "City is required."),
+  state: z.string().min(2, "State is required."),
+  locality: z.string().optional(),
+  sellerContact: z.string().min(10, "Valid 10-digit phone number is required."),
+  notes: z.string().max(400).optional(),
+  safetyDeclaration: z.literal(true, {
+    errorMap: () => ({
+      message: "You must declare that the medicine is unexpired, stored at proper temperature, and in original sealed packaging.",
+    }),
+  }),
+});
+
+export const medicineClaimSchema = z.object({
+  listingId: z.string().min(1, "Listing ID required."),
+  patientName: z.string().min(2, "Patient full name is required."),
+  doctorName: z.string().min(2, "Doctor name on prescription is required."),
+  doctorRegNo: z.string().optional(),
+  requesterPhone: z.string().min(10, "10-digit phone number is required."),
+  prescriptionUrl: z.string().min(3, "Prescription document or image reference is required."),
+  notes: z.string().max(300).optional(),
+  prescriptionDeclaration: z.literal(true, {
+    errorMap: () => ({
+      message: "You must confirm that you possess a genuine, active doctor's prescription for this medication.",
+    }),
+  }),
+});
+

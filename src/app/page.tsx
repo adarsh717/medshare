@@ -11,6 +11,11 @@ import {
   CheckCircle,
   FileText,
   UserCheck,
+  Sparkles,
+  Upload,
+  Clock,
+  MapPin,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -21,44 +26,45 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const { requests: bloodRequests } = await dataStore.getBloodRequests({ limit: 3 });
+  const { medicines: surplusMedicines } = await dataStore.getSurplusMedicines({ limit: 4 });
   const { resources: featuredResources } = await dataStore.getResources({ limit: 4 });
 
   return (
     <div className="space-y-12 pb-16">
-      {/* Hero Section - Restrained & Content-First */}
-      <section className="border-b border-slate-200 bg-slate-50/70 py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Hero Section - Restrained Glassmorphism & High-Impact Copy */}
+      <section className="relative overflow-hidden border-b border-white/60 glass-panel py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Public Healthcare Assistance & Donor Coordination</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50/80 border border-teal-200/80 text-teal-800 text-xs font-semibold backdrop-blur-xs">
+              <ShieldCheck className="h-3.5 w-3.5 text-teal-700" />
+              <span>Public Healthcare Assistance & Surplus Medicine Exchange</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
               Responsible, community-driven healthcare assistance when it matters most.
             </h1>
 
-            <p className="text-base text-slate-600 leading-relaxed">
-              MedShare helps patients and caregivers discover verified healthcare resources, connect with voluntary blood donors, locate affordable medicine channels, and learn about lawful organ donation.
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              MedShare connects urgent blood requests with voluntary donors, helps patients claim unexpired leftover medicines at <strong>50% off MRP</strong> with prescription verification, and facilitates lawful organ donation awareness.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
+              <Link href="/medicine">
+                <Button variant="primary" size="md" className="gap-2 shadow-sm">
+                  <Pill className="h-4 w-4" />
+                  <span>Browse Medicines (50% Off)</span>
+                </Button>
+              </Link>
+              <Link href="/medicine/list">
+                <Button variant="outline" size="md" className="gap-2 bg-white/70 border-emerald-300 text-emerald-800 hover:bg-emerald-50">
+                  <Sparkles className="h-4 w-4 text-emerald-600" />
+                  <span>List Leftover Medicine</span>
+                </Button>
+              </Link>
               <Link href="/blood">
-                <Button variant="primary" size="md" className="gap-2">
-                  <Heart className="h-4 w-4" />
-                  <span>Find Blood Requests</span>
-                </Button>
-              </Link>
-              <Link href="/blood/donate">
-                <Button variant="outline" size="md" className="gap-2">
-                  <UserCheck className="h-4 w-4" />
-                  <span>Register as Blood Donor</span>
-                </Button>
-              </Link>
-              <Link href="/directory">
-                <Button variant="ghost" size="md" className="gap-1.5 text-slate-700">
-                  <Search className="h-4 w-4" />
-                  <span>Search Healthcare Directory</span>
+                <Button variant="ghost" size="md" className="gap-2 text-slate-700 hover:bg-white/60">
+                  <Heart className="h-4 w-4 text-red-600" />
+                  <span>Blood Requests</span>
                 </Button>
               </Link>
             </div>
@@ -66,10 +72,101 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Surplus Medicine Resale & Prescription Claim Feature Showcase */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="glass-panel border border-emerald-200/80 rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-emerald-100">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800 text-xs font-bold mb-1.5">
+                <Tag className="h-3 w-3" />
+                <span>50% MRP Resale & Free Donation</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Surplus Medicine Exchange
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                Have unexpired sealed medicines left after treatment? List them at half price (or donate free). Patients can claim them securely by uploading a valid doctor&apos;s prescription.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/medicine/list">
+                <Button variant="primary" size="sm" className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>List Surplus Medicine</span>
+                </Button>
+              </Link>
+              <Link href="/medicine">
+                <Button variant="outline" size="sm" className="text-xs bg-white/80">
+                  <span>View All Listings</span>
+                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Featured Surplus Medicine Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {surplusMedicines.map((med) => (
+              <div
+                key={med.id}
+                className="glass-card-hover rounded-xl p-4 flex flex-col justify-between border border-slate-200/70"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      {med.offeredPrice === 0 ? "Free Donation" : `${med.discountPercentage}% OFF MRP`}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium capitalize">
+                      {med.category}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 line-clamp-1">{med.medicineName}</h3>
+                    <p className="text-[11px] text-slate-500 italic line-clamp-1">{med.dosage} {med.manufacturer ? `• ${med.manufacturer}` : ""}</p>
+                  </div>
+
+                  <div className="bg-slate-50/80 rounded-lg p-2.5 space-y-1 text-xs border border-slate-100">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-slate-400 text-[11px]">Original MRP:</span>
+                      <span className="text-slate-400 line-through text-[11px]">₹{med.mrpPrice}</span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-semibold text-slate-700">Effective Price:</span>
+                      <span className="text-base font-extrabold text-emerald-700">
+                        {med.offeredPrice === 0 ? "₹0 (Free)" : `₹${med.offeredPrice}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-[11px] text-slate-600 pt-1">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                      <span>Exp: <strong>{formatDate(med.expiryDate)}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+                      <span className="truncate">{med.city}, {med.state}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Link href={`/medicine?claim=${med.id}`} className="pt-3 block">
+                  <Button variant="outline" size="sm" className="w-full text-xs font-semibold border-emerald-300 text-emerald-800 hover:bg-emerald-50">
+                    <Upload className="h-3 w-3 mr-1.5 text-emerald-600" />
+                    Claim with Prescription
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Urgent Blood Requests Highlight */}
       {bloodRequests.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="border border-red-200 bg-red-50/30 rounded-lg p-5">
+          <div className="glass-panel border border-red-200/80 rounded-2xl p-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-red-100 gap-2 mb-4">
               <div className="flex items-center gap-2 text-red-900 font-bold text-sm">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -88,7 +185,7 @@ export default async function HomePage() {
               {bloodRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="bg-white border border-slate-200 rounded-md p-4 space-y-2.5 shadow-none"
+                  className="glass-card-hover rounded-xl p-4 space-y-2.5 border border-slate-200/60"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <StatusBadge
@@ -144,15 +241,15 @@ export default async function HomePage() {
             Assistance Modules & Healthcare Services
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Built for transparent community assistance without commercial incentives or illegal intermediaries.
+            Built for transparent community assistance, ethical medicine reuse, and statutory compliance.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: Blood Assistance */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 flex flex-col justify-between">
+          <div className="glass-card-hover rounded-xl p-5 space-y-3 flex flex-col justify-between border border-slate-200/70">
             <div className="space-y-2">
-              <div className="h-9 w-9 rounded-md bg-red-50 text-red-700 flex items-center justify-center border border-red-100">
+              <div className="h-9 w-9 rounded-lg bg-red-50 text-red-700 flex items-center justify-center border border-red-100">
                 <Heart className="h-5 w-5" />
               </div>
               <h3 className="text-sm font-bold text-slate-900">Voluntary Blood Coordination</h3>
@@ -167,28 +264,31 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {/* Card 2: Medicine Navigation */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 flex flex-col justify-between">
+          {/* Card 2: Medicine Exchange (50% Off / Donation) */}
+          <div className="glass-card-hover rounded-xl p-5 space-y-3 flex flex-col justify-between border border-emerald-200/80 bg-emerald-50/20">
             <div className="space-y-2">
-              <div className="h-9 w-9 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
+              <div className="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
                 <Pill className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Lawful Medicine Assistance</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-slate-900">Surplus Medicine Exchange</h3>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">50% OFF</span>
+              </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Assistance locating affordable generic alternatives and Jan Aushadhi kendras. Strict prohibition on unregulated peer-to-peer drug redistribution.
+                List unexpired leftover sealed medicines at 50% discount or donate them. Patients claim needed medicines at half price with valid doctor prescription.
               </p>
             </div>
             <Link href="/medicine" className="pt-2">
-              <span className="text-xs font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1">
-                Medicine Navigation <ArrowRight className="h-3 w-3" />
+              <span className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+                Browse & Claim Medicines <ArrowRight className="h-3 w-3" />
               </span>
             </Link>
           </div>
 
           {/* Card 3: Medical Equipment & Expenses */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 flex flex-col justify-between">
+          <div className="glass-card-hover rounded-xl p-5 space-y-3 flex flex-col justify-between border border-slate-200/70">
             <div className="space-y-2">
-              <div className="h-9 w-9 rounded-md bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
+              <div className="h-9 w-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
                 <Activity className="h-5 w-5" />
               </div>
               <h3 className="text-sm font-bold text-slate-900">Equipment & Expense Support</h3>
@@ -204,9 +304,9 @@ export default async function HomePage() {
           </div>
 
           {/* Card 4: Organ Donation Awareness */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 flex flex-col justify-between">
+          <div className="glass-card-hover rounded-xl p-5 space-y-3 flex flex-col justify-between border border-slate-200/70">
             <div className="space-y-2">
-              <div className="h-9 w-9 rounded-md bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
+              <div className="h-9 w-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
                 <FileText className="h-5 w-5" />
               </div>
               <h3 className="text-sm font-bold text-slate-900">Organ Donation Awareness</h3>
@@ -224,55 +324,55 @@ export default async function HomePage() {
       </section>
 
       {/* How MedShare Works */}
-      <section className="border-y border-slate-200 bg-slate-50/50 py-12">
+      <section className="border-y border-white/60 glass-panel py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               How the Assistance Model Works
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              Engineered with privacy protection, statutory compliance, and transparent request tracking.
+              Engineered with privacy protection, prescription safety verification, and transparent request tracking.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white border border-slate-200 rounded-md p-4 space-y-2">
+            <div className="glass-card rounded-xl p-4 space-y-2 border border-slate-200/60">
               <div className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded w-fit">
                 Step 1
               </div>
-              <h4 className="text-sm font-semibold text-slate-900">Submit Request</h4>
+              <h4 className="text-sm font-semibold text-slate-900">Submit or List</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Patients or caregivers submit a structured request detailing required blood group, hospital, or medicine guidance.
+                Post an urgent blood request or list unexpired surplus sealed medicine at 50% discount with batch details.
               </p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-md p-4 space-y-2">
+            <div className="glass-card rounded-xl p-4 space-y-2 border border-slate-200/60">
               <div className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded w-fit">
                 Step 2
               </div>
-              <h4 className="text-sm font-semibold text-slate-900">Safety & Privacy Screening</h4>
+              <h4 className="text-sm font-semibold text-slate-900">Safety & Expiry Verification</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Requests are validated against safety requirements. Sensitive medical documents and donor contact numbers remain shielded.
+                Medicines must be unexpired (&ge;30 days remaining) and sealed in original blister/strip packs.
               </p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-md p-4 space-y-2">
+            <div className="glass-card rounded-xl p-4 space-y-2 border border-slate-200/60">
               <div className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded w-fit">
                 Step 3
               </div>
-              <h4 className="text-sm font-semibold text-slate-900">Targeted Matching</h4>
+              <h4 className="text-sm font-semibold text-slate-900">Prescription Upload</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Nearby registered voluntary donors and verified providers receive in-app notifications and choose to respond voluntarily.
+                Patients in need upload a valid doctor prescription and registration details to claim listed medicines.
               </p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-md p-4 space-y-2">
+            <div className="glass-card rounded-xl p-4 space-y-2 border border-slate-200/60">
               <div className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded w-fit">
                 Step 4
               </div>
               <h4 className="text-sm font-semibold text-slate-900">Track & Resolve</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Both parties coordinate through consent-based channels. Status updates are recorded permanently with audit trails.
+                Parties coordinate safely through verified channels with audit logging and transparent status updates.
               </p>
             </div>
           </div>
@@ -303,7 +403,7 @@ export default async function HomePage() {
           {featuredResources.map((res) => (
             <div
               key={res.id}
-              className="bg-white border border-slate-200 rounded-lg p-4 space-y-2.5 flex flex-col justify-between"
+              className="glass-card-hover rounded-xl p-4 space-y-2.5 flex flex-col justify-between border border-slate-200/70"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
@@ -317,7 +417,7 @@ export default async function HomePage() {
                   {res.servicesOffered.slice(0, 3).map((s, idx) => (
                     <span
                       key={idx}
-                      className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded"
+                      className="bg-slate-100/80 text-slate-700 text-[10px] px-2 py-0.5 rounded"
                     >
                       {s}
                     </span>
@@ -341,9 +441,9 @@ export default async function HomePage() {
 
       {/* Safety & Compliance Pledge Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="border border-slate-200 bg-white rounded-lg p-6 space-y-4">
+        <div className="glass-panel border border-slate-200/80 rounded-2xl p-6 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded bg-teal-50 text-teal-700 shrink-0">
+            <div className="p-2 rounded-lg bg-teal-50 text-teal-700 shrink-0">
               <CheckCircle className="h-5 w-5" />
             </div>
             <div>
@@ -351,7 +451,7 @@ export default async function HomePage() {
                 Ethical & Responsible Healthcare Standard
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed mt-1">
-                MedShare does not engage in commercial transactions, private prescription drug sales, or unauthorized organ matchmaking. Blood donation must be voluntary, non-remunerated, and processed exclusively through licensed blood centers complying with the Drugs and Cosmetics Act.
+                MedShare promotes legally permitted surplus medicine redistribution to eliminate wastage and provide affordable healthcare. All medicine exchanges mandate sealed packaging declarations, unexpired validity (&ge;30 days), and doctor prescription verification before dispensing.
               </p>
             </div>
           </div>

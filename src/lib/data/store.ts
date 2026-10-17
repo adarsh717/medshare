@@ -17,6 +17,10 @@ import {
   BloodGroup,
   RequestStatus,
   UserRole,
+  SurplusMedicineListing,
+  MedicineClaimRequest,
+  MedicineListingStatus,
+  ClaimVerificationStatus,
 } from "@/types";
 
 // In-Memory Seed Storage for robust operation & test execution
@@ -35,6 +39,8 @@ class MedShareDataStore {
   private requestResponses: Map<string, RequestResponse> = new Map();
   private notifications: Map<string, InAppNotification> = new Map();
   private auditLogs: AuditLog[] = [];
+  private surplusMedicines: Map<string, SurplusMedicineListing> = new Map();
+  private medicineClaims: Map<string, MedicineClaimRequest> = new Map();
 
   constructor() {
     this.seedInitialData();
@@ -414,6 +420,111 @@ class MedShareDataStore {
       createdAt: "2026-10-15T08:35:00.000Z",
     };
     this.notifications.set(notif2.id, notif2);
+
+    // Seed Initial Verified Surplus Medicines (50% Off / Resale / Donation with Sealed Packaging)
+    const surplus1: SurplusMedicineListing = {
+      id: "med-001",
+      userId: demoPatient.id,
+      sellerName: "Arun Verma",
+      sellerContact: "+91-9876543211",
+      medicineName: "Augmentin 625 Duo",
+      dosage: "Amoxicillin 500mg + Clavulanic Acid 125mg",
+      manufacturer: "GlaxoSmithKline (GSK)",
+      category: "Antibiotics",
+      mrpPrice: 220,
+      offeredPrice: 110, // 50% OFF!
+      discountPercentage: 50,
+      quantityRemaining: "1 Full Sealed Strip (10 Tablets)",
+      expiryDate: "2027-05-30",
+      batchNumber: "B2026-AUG",
+      packagingCondition: "sealed_blister",
+      city: "New Delhi",
+      state: "Delhi",
+      locality: "Hauz Khas",
+      notes: "Doctor changed course after 3 days. Unopened brand new sealed aluminium blister strip stored in cool dry place.",
+      status: "available",
+      createdAt: "2026-10-16T10:00:00.000Z",
+      updatedAt: "2026-10-16T10:00:00.000Z",
+    };
+    this.surplusMedicines.set(surplus1.id, surplus1);
+
+    const surplus2: SurplusMedicineListing = {
+      id: "med-002",
+      userId: demoDonor.id,
+      sellerName: "Pooja Sharma",
+      sellerContact: "+91-9876543212",
+      medicineName: "Januvia 100mg",
+      dosage: "Sitagliptin Phosphate 100mg",
+      manufacturer: "MSD Pharmaceuticals",
+      category: "Diabetes Care",
+      mrpPrice: 380,
+      offeredPrice: 190, // 50% OFF!
+      discountPercentage: 50,
+      quantityRemaining: "2 Full Sealed Strips (14 Tablets)",
+      expiryDate: "2027-09-15",
+      batchNumber: "JN-9941",
+      packagingCondition: "sealed_blister",
+      city: "New Delhi",
+      state: "Delhi",
+      locality: "South Extension",
+      notes: "Prescribed dose changed by endocrinologist. 2 sealed blister packs remaining.",
+      status: "available",
+      createdAt: "2026-10-16T12:30:00.000Z",
+      updatedAt: "2026-10-16T12:30:00.000Z",
+    };
+    this.surplusMedicines.set(surplus2.id, surplus2);
+
+    const surplus3: SurplusMedicineListing = {
+      id: "med-003",
+      userId: "usr-patient-02",
+      sellerName: "Rohan Desai",
+      sellerContact: "+91-9876543214",
+      medicineName: "Pantocid 40mg",
+      dosage: "Pantoprazole Gastro-resistant 40mg",
+      manufacturer: "Sun Pharma",
+      category: "Gastrointestinal",
+      mrpPrice: 160,
+      offeredPrice: 80, // 50% OFF!
+      discountPercentage: 50,
+      quantityRemaining: "1 Strip (15 Tablets)",
+      expiryDate: "2027-11-20",
+      batchNumber: "PC-4021",
+      packagingCondition: "sealed_blister",
+      city: "Mumbai",
+      state: "Maharashtra",
+      locality: "Bandra West",
+      notes: "Excess strip left after acid reflux recovery. Completely sealed.",
+      status: "available",
+      createdAt: "2026-10-15T15:00:00.000Z",
+      updatedAt: "2026-10-15T15:00:00.000Z",
+    };
+    this.surplusMedicines.set(surplus3.id, surplus3);
+
+    const surplus4: SurplusMedicineListing = {
+      id: "med-004",
+      userId: "usr-patient-03",
+      sellerName: "Priya Nair",
+      sellerContact: "+91-9876543215",
+      medicineName: "Telma 40",
+      dosage: "Telmisartan 40mg",
+      manufacturer: "Glenmark Pharmaceuticals",
+      category: "Cardiology & Blood Pressure",
+      mrpPrice: 240,
+      offeredPrice: 120, // 50% OFF!
+      discountPercentage: 50,
+      quantityRemaining: "2 Strips (30 Tablets)",
+      expiryDate: "2027-08-10",
+      batchNumber: "TL-819",
+      packagingCondition: "sealed_blister",
+      city: "Bengaluru",
+      state: "Karnataka",
+      locality: "Indiranagar",
+      notes: "Cardiologist switched medication. Sealed boxes with hologram.",
+      status: "available",
+      createdAt: "2026-10-14T09:15:00.000Z",
+      updatedAt: "2026-10-14T09:15:00.000Z",
+    };
+    this.surplusMedicines.set(surplus4.id, surplus4);
 
     // Seed Audit Log
     this.auditLogs.push({
@@ -1052,6 +1163,187 @@ class MedShareDataStore {
 
   async getAuditLogs(limit: number = 50): Promise<AuditLog[]> {
     return this.auditLogs.slice(0, limit);
+  }
+
+  // --- SURPLUS MEDICINE EXCHANGE (50% OFF RESALE / DONATION WITH PRESCRIPTION) ---
+  async getSurplusMedicines(filters?: {
+    search?: string;
+    category?: string;
+    city?: string;
+    status?: string;
+    maxPrice?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ medicines: SurplusMedicineListing[]; total: number }> {
+    let list = Array.from(this.surplusMedicines.values());
+
+    if (filters?.status && filters.status !== "all") {
+      list = list.filter((m) => m.status === filters.status);
+    } else {
+      list = list.filter((m) => m.status === "available");
+    }
+
+    if (filters?.category && filters.category !== "all") {
+      list = list.filter((m) => m.category.toLowerCase().includes(filters.category!.toLowerCase()));
+    }
+
+    if (filters?.city && filters.city !== "all") {
+      list = list.filter((m) => m.city.toLowerCase().includes(filters.city!.toLowerCase()));
+    }
+
+    if (filters?.maxPrice !== undefined && filters.maxPrice > 0) {
+      list = list.filter((m) => m.offeredPrice <= filters.maxPrice!);
+    }
+
+    if (filters?.search) {
+      const q = filters.search.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.medicineName.toLowerCase().includes(q) ||
+          m.dosage.toLowerCase().includes(q) ||
+          m.category.toLowerCase().includes(q) ||
+          m.city.toLowerCase().includes(q) ||
+          (m.manufacturer && m.manufacturer.toLowerCase().includes(q))
+      );
+    }
+
+    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const total = list.length;
+    const offset = filters?.offset || 0;
+    const limit = filters?.limit || 20;
+    return { medicines: list.slice(offset, offset + limit), total };
+  }
+
+  async getSurplusMedicineById(id: string): Promise<SurplusMedicineListing | null> {
+    return this.surplusMedicines.get(id) || null;
+  }
+
+  async createSurplusMedicine(
+    data: Omit<SurplusMedicineListing, "id" | "createdAt" | "updatedAt" | "discountPercentage">
+  ): Promise<SurplusMedicineListing> {
+    const id = `med-list-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const now = new Date().toISOString();
+
+    const discountPercentage =
+      data.mrpPrice > 0
+        ? Math.round(((data.mrpPrice - data.offeredPrice) / data.mrpPrice) * 100)
+        : 0;
+
+    const newListing: SurplusMedicineListing = {
+      ...data,
+      id,
+      discountPercentage,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.surplusMedicines.set(id, newListing);
+
+    this.createAuditLog({
+      userId: data.userId,
+      action: "CREATE_SURPLUS_MEDICINE_LISTING",
+      entityType: "surplus_medicine",
+      entityId: id,
+      details: {
+        medicineName: data.medicineName,
+        mrpPrice: data.mrpPrice,
+        offeredPrice: data.offeredPrice,
+        discountPercentage,
+        expiryDate: data.expiryDate,
+      },
+    });
+
+    return newListing;
+  }
+
+  async updateSurplusMedicineStatus(
+    id: string,
+    status: MedicineListingStatus
+  ): Promise<SurplusMedicineListing | null> {
+    const item = this.surplusMedicines.get(id);
+    if (!item) return null;
+    item.status = status;
+    item.updatedAt = new Date().toISOString();
+    this.surplusMedicines.set(id, item);
+    return item;
+  }
+
+  async createMedicineClaim(
+    data: Omit<MedicineClaimRequest, "id" | "createdAt" | "status">
+  ): Promise<MedicineClaimRequest> {
+    const id = `claim-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const now = new Date().toISOString();
+
+    const claim: MedicineClaimRequest = {
+      ...data,
+      id,
+      status: "pending_verification",
+      createdAt: now,
+    };
+
+    this.medicineClaims.set(id, claim);
+
+    // Notify seller
+    const listing = this.surplusMedicines.get(data.listingId);
+    if (listing) {
+      this.createNotification({
+        userId: listing.userId,
+        title: `Prescription Claim for ${listing.medicineName}`,
+        message: `${data.requesterName} uploaded a prescription requesting "${listing.medicineName}". Please review the prescription to coordinate transfer.`,
+        link: `/dashboard/requests`,
+        type: "request_status",
+      });
+    }
+
+    this.createAuditLog({
+      userId: data.requesterId,
+      action: "SUBMIT_MEDICINE_PRESCRIPTION_CLAIM",
+      entityType: "medicine_claim",
+      entityId: id,
+      details: {
+        listingId: data.listingId,
+        patientName: data.patientName,
+        doctorName: data.doctorName,
+        prescriptionUrl: data.prescriptionUrl,
+      },
+    });
+
+    return claim;
+  }
+
+  async getMedicineClaims(listingId?: string, requesterId?: string): Promise<MedicineClaimRequest[]> {
+    let list = Array.from(this.medicineClaims.values());
+    if (listingId) {
+      list = list.filter((c) => c.listingId === listingId);
+    }
+    if (requesterId) {
+      list = list.filter((c) => c.requesterId === requesterId);
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updateMedicineClaimStatus(
+    claimId: string,
+    status: ClaimVerificationStatus,
+    reviewedBy?: string
+  ): Promise<MedicineClaimRequest | null> {
+    const claim = this.medicineClaims.get(claimId);
+    if (!claim) return null;
+    claim.status = status;
+    claim.reviewedBy = reviewedBy;
+    claim.reviewedAt = new Date().toISOString();
+    this.medicineClaims.set(claimId, claim);
+
+    if (status === "approved") {
+      const listing = this.surplusMedicines.get(claim.listingId);
+      if (listing) {
+        listing.status = "reserved";
+        this.surplusMedicines.set(listing.id, listing);
+      }
+    }
+
+    return claim;
   }
 }
 

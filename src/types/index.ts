@@ -209,3 +209,51 @@ export interface OrganDonationPledge {
   declarationAcknowledged: boolean;
   createdAt: string;
 }
+
+export type PackagingCondition = "sealed_blister" | "unopened_bottle" | "intact_box";
+export type MedicineListingStatus = "available" | "reserved" | "claimed" | "expired";
+export type ClaimVerificationStatus = "pending_verification" | "approved" | "completed" | "rejected";
+
+export interface SurplusMedicineListing {
+  id: string;
+  userId: string;
+  sellerName: string;
+  sellerContact: string;
+  medicineName: string;
+  dosage: string;
+  manufacturer?: string;
+  category: string;
+  mrpPrice: number;
+  offeredPrice: number;
+  discountPercentage: number;
+  quantityRemaining: string;
+  expiryDate: string;
+  batchNumber: string;
+  packagingCondition: PackagingCondition;
+  city: string;
+  state: string;
+  locality?: string;
+  notes?: string;
+  status: MedicineListingStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MedicineClaimRequest {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  requesterId: string;
+  requesterName: string;
+  requesterPhone: string;
+  patientName: string;
+  doctorName: string;
+  doctorRegNo?: string;
+  prescriptionUrl: string;
+  notes?: string;
+  status: ClaimVerificationStatus;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+

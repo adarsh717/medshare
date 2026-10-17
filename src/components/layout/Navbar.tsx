@@ -12,6 +12,7 @@ import {
   LogOut,
   LayoutDashboard,
   ShieldAlert,
+  Pill,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -30,7 +31,7 @@ export function Navbar({ currentUser, unreadCount = 0 }: NavbarProps) {
 
   const navLinks = [
     { href: "/blood", label: "Blood Requests" },
-    { href: "/medicine", label: "Medicine Assistance" },
+    { href: "/medicine", label: "Medicine Exchange" },
     { href: "/organ-donation", label: "Organ Donation" },
     { href: "/directory", label: "Healthcare Directory" },
     { href: "/services", label: "Services" },
@@ -48,9 +49,9 @@ export function Navbar({ currentUser, unreadCount = 0 }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-none">
+    <header className="sticky top-0 z-40 w-full glass-nav border-b border-white/60">
       {/* Top Emergency Advisory Bar */}
-      <div className="bg-slate-900 text-slate-100 text-[11px] py-1 px-4 text-center font-medium">
+      <div className="bg-slate-900/90 backdrop-blur-sm text-slate-100 text-[11px] py-1 px-4 text-center font-medium">
         <span>Emergency Medical Assistance? Call National Emergency Helpline at </span>
         <strong className="text-white underline font-semibold">112</strong>
         <span> or Ambulance Services at </span>
@@ -61,7 +62,7 @@ export function Navbar({ currentUser, unreadCount = 0 }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 focus:outline-none">
-            <div className="h-8 w-8 rounded-md bg-teal-700 flex items-center justify-center text-white">
+            <div className="h-8 w-8 rounded-lg bg-teal-700/90 shadow-sm flex items-center justify-center text-white backdrop-blur-xs">
               <HeartHandshake className="h-5 w-5" />
             </div>
             <div>
@@ -80,10 +81,10 @@ export function Navbar({ currentUser, unreadCount = 0 }: NavbarProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-3 py-1.5 rounded-md text-xs lg:text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all ${
                     isActive
-                      ? "text-teal-900 bg-teal-50/80 font-semibold"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                      ? "text-teal-900 bg-teal-100/70 shadow-xs font-semibold backdrop-blur-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
                 >
                   {link.label}
@@ -93,7 +94,18 @@ export function Navbar({ currentUser, unreadCount = 0 }: NavbarProps) {
           </nav>
 
           {/* Right Header Action Items */}
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-2.5">
+            <Link href="/medicine/list" className="hidden lg:inline-flex">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-emerald-300/80 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 text-xs font-semibold rounded-lg shadow-2xs backdrop-blur-xs"
+              >
+                <Pill className="h-3.5 w-3.5 text-emerald-600" />
+                <span>List Medicine (50% Off)</span>
+              </Button>
+            </Link>
+
             {currentUser ? (
               <div className="flex items-center gap-2">
                 {/* Notifications Link */}
