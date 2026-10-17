@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeartHandshake, ShieldCheck, AlertCircle, ExternalLink } from "lucide-react";
+import { HeartHandshake, ShieldCheck, AlertCircle, ExternalLink, FileText } from "lucide-react";
 
 export function Footer() {
   return (
@@ -144,10 +144,16 @@ export function Footer() {
                   Medical Safety Guidelines
                 </Link>
               </li>
-              <li>
-                <span className="text-slate-500">
-                  Secure Server Architecture
-                </span>
+              <li className="pt-1">
+                <a
+                  href="/MedShare_User_Guide_and_Documentation.pdf"
+                  target="_blank"
+                  download="MedShare_User_Guide_and_Documentation.pdf"
+                  className="inline-flex items-center gap-1.5 text-teal-400 font-semibold hover:text-teal-300 transition-colors"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Download Platform PDF Manual</span>
+                </a>
               </li>
             </ul>
           </div>

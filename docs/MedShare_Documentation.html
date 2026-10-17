@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MedShare — Comprehensive Platform Documentation & User Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    @page {
+      size: A4;
+      margin: 1.6cm 1.4cm 1.6cm 1.4cm;
+      @bottom-right {
+        content: "Page " counter(page);
+        font-family: 'Inter', sans-serif;
+        font-size: 8.5pt;
+        color: #64748b;
+      }
+      @bottom-left {
+        content: "MedShare Healthcare Platform Documentation • Confidential";
+        font-family: 'Inter', sans-serif;
+        font-size: 8.5pt;
+        color: #94a3b8;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.55;
+      color: #1e293b;
+      background: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Print & Page Breaks */
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, h5 {
+      color: #0f172a;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 { font-size: 15pt; border-bottom: 2px solid #0d9488; padding-bottom: 5px; margin-top: 22px; margin-bottom: 12px; }
+    h3 { font-size: 11.5pt; margin-top: 14px; color: #115e59; }
+    h4 { font-size: 10.5pt; margin-top: 10px; color: #334155; }
+    p { margin-bottom: 10px; text-align: justify; }
+
+    strong { font-weight: 600; color: #0f172a; }
+    code {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      color: #0f766e;
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 8pt;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      line-height: 1.45;
+    }
+
+    /* Badges & Tags */
+    .badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+    .badge-teal { background: #ccfbf1; color: #115e59; border: 1px solid #99f6e4; }
+    .badge-emerald { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-blue { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-red { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-purple { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px 0;
+      font-size: 8.5pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+      font-weight: 700;
+      border-bottom: 2px solid #94a3b8;
+    }
+    tr:nth-child(even) td {
+      background: #fdfdfd;
+    }
+
+    /* Callouts */
+    .callout {
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin: 12px 0;
+      font-size: 9pt;
+      border-left: 4px solid;
+    }
+    .callout-info { background: #f0fdfa; border-color: #0d9488; color: #134e4a; }
+    .callout-warning { background: #fffbeb; border-color: #f59e0b; color: #78350f; }
+    .callout-danger { background: #fef2f2; border-color: #ef4444; color: #7f1d1d; }
+    .callout-success { background: #f0fdf4; border-color: #10b981; color: #064e3b; }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .card {
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card h4 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      font-size: 10pt;
+    }
+
+    /* Cover Page */
+    .cover-container {
+      height: 92vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 40px;
+      background: linear-gradient(135deg, #f0fdfa 0%, #ffffff 50%, #f8fafc 100%);
+    }
+    .cover-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cover-logo {
+      width: 44px;
+      height: 44px;
+      background: #0f766e;
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20pt;
+      font-weight: 800;
+    }
+    .cover-title-box {
+      margin: auto 0;
+    }
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .cover-subtitle {
+      font-size: 13pt;
+      font-weight: 500;
+      color: #0f766e;
+      margin-top: 10px;
+    }
+    .cover-desc {
+      font-size: 10.5pt;
+      color: #475569;
+      margin-top: 14px;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+    .cover-meta {
+      border-top: 2px solid #e2e8f0;
+      padding-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      font-size: 8.5pt;
+    }
+    .cover-meta div span {
+      display: block;
+      color: #64748b;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .cover-meta div strong {
+      color: #0f172a;
+      font-size: 9.5pt;
+    }
+
+    /* List styling */
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 12px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* Step boxes */
+    .step-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+    }
+    .step-num {
+      display: inline-block;
+      background: #0f766e;
+      color: white;
+      font-size: 8pt;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= COVER PAGE ================= -->
+  <div class="cover-container">
+    <div class="cover-header">
+      <div class="cover-logo">+</div>
+      <div>
+        <h2 style="border:none; margin:0; padding:0; font-size:16pt; color:#0f172a;">MedShare</h2>
+        <span style="font-size:8.5pt; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.05em;">Community Healthcare Ecosystem</span>
+      </div>
+    </div>
+
+    <div class="cover-title-box">
+      <div style="margin-bottom:12px;">
+        <span class="badge badge-teal">Production Manual</span>
+        <span class="badge badge-emerald">50% Medicine Exchange</span>
+        <span class="badge badge-purple">NOTTO Aligned</span>
+        <span class="badge badge-blue">Glassmorphism UI</span>
+      </div>
+      <h1 class="cover-title">Full Platform Documentation & Operational User Manual</h1>
+      <div class="cover-subtitle">Complete Architecture, Workflows, Regulatory Safety & User Guides</div>
+      <p class="cover-desc">
+        A comprehensive reference guide for MedShare — covering voluntary blood donor coordination, unexpired surplus medicine resale at 50% discount with doctor prescription claims, lawful organ donation awareness, and administrative oversight.
+      </p>
+    </div>
+
+    <div class="cover-meta">
+      <div>
+        <span>Platform Version</span>
+        <strong>MedShare v2.4 (Production Ready)</strong>
+      </div>
+      <div>
+        <span>Technology Stack</span>
+        <strong>Next.js 14 • TypeScript • Tailwind • Vitest</strong>
+      </div>
+      <div>
+        <span>Regulatory Alignment</span>
+        <strong>THOA 1994 • Drugs & Cosmetics Act 1940</strong>
+      </div>
+      <div>
+        <span>Repository</span>
+        <strong>github.com/adarsh717/medshare</strong>
+      </div>
+      <div>
+        <span>Local Endpoint</span>
+        <strong>http://localhost:3000</strong>
+      </div>
+      <div>
+        <span>Publication Date</span>
+        <strong>October 2026</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TABLE OF CONTENTS ================= -->
+  <div class="page-break"></div>
+  <h2>Table of Contents</h2>
+  <table style="margin-top:14px;">
+    <thead>
+      <tr>
+        <th style="width:10%;">Chapter</th>
+        <th style="width:75%;">Topic / Module Details</th>
+        <th style="width:15%;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>01</strong></td>
+        <td><strong>Executive Overview & Product Vision</strong><br><small>Mission, Objectives, Problem Statement, and Core Target Personas</small></td>
+        <td><span class="badge badge-teal">Core</span></td>
+      </tr>
+      <tr>
+        <td><strong>02</strong></td>
+        <td><strong>Statutory Compliance & Indian Healthcare Regulations</strong><br><small>Drugs & Cosmetics Act (1940), THOA (1994), NBTC Voluntary Blood Standards</small></td>
+        <td><span class="badge badge-red">Statutory</span></td>
+      </tr>
+      <tr>
+        <td><strong>03</strong></td>
+        <td><strong>Architecture & Technology Stack</strong><br><small>Next.js 14 App Router, Glassmorphism Design System, Hybrid Data Store, REST Endpoints</small></td>
+        <td><span class="badge badge-blue">Technical</span></td>
+      </tr>
+      <tr>
+        <td><strong>04</strong></td>
+        <td><strong>User Roles & Security Permissions Matrix</strong><br><small>Patient/Caregiver, Voluntary Blood Donor, Volunteer, Provider, Administrator</small></td>
+        <td><span class="badge badge-purple">Security</span></td>
+      </tr>
+      <tr>
+        <td><strong>05</strong></td>
+        <td><strong>Step-by-Step User Manual (All Modules)</strong><br>
+          <small>
+            • 5.1 Surplus Leftover Medicine Resale (50% Off / Free Donation)<br>
+            • 5.2 Claiming Medicines with Doctor Prescription Upload<br>
+            • 5.3 Blood Donation Requests & Locality Matching<br>
+            • 5.4 Lawful Organ Donation Awareness & NOTTO Registration<br>
+            • 5.5 Medical Equipment Loans & Charitable Expense Guidance<br>
+            • 5.6 Verified Healthcare Resource Directory<br>
+            • 5.7 User & Role Dashboards
+          </small>
+        </td>
+        <td><span class="badge badge-emerald">User Guide</span></td>
+      </tr>
+      <tr>
+        <td><strong>06</strong></td>
+        <td><strong>Administrator Control Center & Quality Assurance</strong><br><small>Provider Verification, Claim Prescription Reviews, Audit Logging</small></td>
+        <td><span class="badge badge-purple">Operations</span></td>
+      </tr>
+      <tr>
+        <td><strong>07</strong></td>
+        <td><strong>Installation, Development & Deployment Guide</strong><br><small>Git commands, npm scripts, Environment variables, Vitest, Vercel setup</small></td>
+        <td><span class="badge badge-teal">DevOps</span></td>
+      </tr>
+      <tr>
+        <td><strong>08</strong></td>
+        <td><strong>Frequently Asked Questions (FAQ) & Troubleshooting</strong><br><small>Clear answers to common questions in English and Hinglish</small></td>
+        <td><span class="badge badge-blue">Support</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ================= CHAPTER 1 ================= -->
+  <div class="page-break"></div>
+  <h2>Chapter 1: Executive Overview & Product Vision</h2>
+
+  <p>
+    <strong>MedShare</strong> is a production-grade, community-driven healthcare assistance web platform. In many healthcare systems, patients face severe fragmentation: high prescription drug costs leading to abandonment, emergency blood shortages during critical trauma surgeries, and widespread confusion regarding lawful organ donation.
+  </p>
+  <p>
+    At the same time, thousands of households end up with leftover, unexpired, sealed medicines after treatments change or courses end. These medicines worth crores of rupees are frequently disposed of, creating immense economic waste. MedShare solves these challenges through transparent, legally grounded, and technology-empowered channels.
+  </p>
+
+  <h3>1.1 Primary Platform Objectives</h3>
+  <div class="card-grid">
+    <div class="card">
+      <h4>💊 Surplus Medicine Waste Reduction</h4>
+      <p style="font-size:8.5pt; color:#475569; margin:0;">
+        Empowers families to resell unexpired, sealed surplus medicines at a flat <strong>50% discount</strong> (or 100% free donation), while enabling economically distressed patients to claim them safely with valid doctor prescription verification.
+      </p>
+    </div>
+    <div class="card">
+      <h4>🩸 Voluntary Blood Donor Coordination</h4>
+      <p style="font-size:8.5pt; color:#475569; margin:0;">
+        Matches urgent hospital blood requests with registered voluntary non-remunerated donors in the same city or locality, protecting donor privacy by preventing public phone leakage.
+      </p>
+    </div>
+    <div class="card">
+      <h4>🫀 Lawful Organ Donation Awareness</h4>
+      <p style="font-size:8.5pt; color:#475569; margin:0;">
+        Demystifies organ donation under Indian law, offers voluntary awareness pledges, and directs citizens to the official National Organ and Tissue Transplant Organization (NOTTO) registry.
+      </p>
+    </div>
+    <div class="card">
+      <h4>🏥 Authorized Healthcare Directory</h4>
+      <p style="font-size:8.5pt; color:#475569; margin:0;">
+        Curates authentic government and verified charitable providers, blood banks, subsidized generic dispensaries (Jan Aushadhi), and accredited transplant retrieval centers.
+      </p>
+    </div>
+  </div>
+
+  <h3>1.2 Target Personas</h3>
+  <ul>
+    <li><strong>Patients & Caregivers:</strong> Need urgent blood units, affordable maintenance drugs, or medical mobility equipment.</li>
+    <li><strong>Surplus Medicine Sellers / Donors:</strong> Citizens with leftover unexpired prescription strips seeking to recoup partial expenses (50% MRP) or donate to needy patients.</li>
+    <li><strong>Voluntary Blood Donors:</strong> Healthy citizens ready to donate whole blood or single donor platelets (SDP) in emergencies.</li>
+    <li><strong>Authorized Healthcare Providers:</strong> Verified hospitals and blood banks coordinating patient transfers.</li>
+    <li><strong>Platform Administrators:</strong> Compliance officers auditing prescriptions, verifying providers, and moderating content.</li>
+  </ul>
+
+  <!-- ================= CHAPTER 2 ================= -->
+  <h2>Chapter 2: Statutory Compliance & Legal Framework (India)</h2>
+
+  <div class="callout callout-danger avoid-break">
+    <strong>Mandatory Statutory Standards:</strong> MedShare operates strictly within the Indian legal healthcare framework. Commercial trafficking, unregulated narcotics distribution, and commercial organ matchmaking are non-bailable criminal offenses.
+  </div>
+
+  <h3>2.1 Surplus Medicine Exchange (Drugs & Cosmetics Act, 1940)</h3>
+  <ul>
+    <li><strong>Unexpired Validity (&ge;30 Days):</strong> No medicine with less than 30 days of shelf life remaining is permitted on the platform. Expired drugs are automatically blocked.</li>
+    <li><strong>Sealed Packaging Declaration:</strong> Sellers must certify that tablets/capsules are in intact blister/strip packs or factory-sealed unopened bottles. Loose or cut tablets are prohibited.</li>
+    <li><strong>Mandatory Doctor Prescription Upload:</strong> Claiming any prescription medicine requires the patient to supply the prescribing doctor's name, medical council registration number, and an authentic prescription document.</li>
+    <li><strong>Schedule X & Narcotic Substances Barred:</strong> Habit-forming, psychiatric, or controlled substances are excluded from peer exchange.</li>
+  </ul>
+
+  <h3>2.2 Voluntary Blood Donation (National Blood Transfusion Council)</h3>
+  <p>
+    Under the Supreme Court directives and NBTC guidelines, paid blood donation (commercial blood banking) is strictly illegal in India. MedShare only facilitates voluntary, non-remunerated donors. Donor phone numbers are shielded and only shared upon explicit consent between matching parties.
+  </p>
+
+  <h3>2.3 Organ Donation Awareness (THOA, 1994)</h3>
+  <p>
+    Under the <strong>Transplantation of Human Organs and Tissues Act (THOA) 1994</strong> (Sections 18 & 19), buying, selling, or paying commercial consideration for human organs carries up to 10 years rigorous imprisonment. MedShare does NOT buy, sell, or match organ recipients privately. All deceased organ allocation is exclusively managed by state and national registries (NOTTO, ROTTO, SOTTO).
+  </p>
+
+  <!-- ================= CHAPTER 3 ================= -->
+  <div class="page-break"></div>
+  <h2>Chapter 3: Architecture & Technology Stack</h2>
+
+  <p>
+    MedShare is built using a modern, production-ready stack designed for rapid rendering, high accessibility, and seamless cloud deployment.
+  </p>
+
+  <table class="avoid-break">
+    <thead>
+      <tr>
+        <th style="width:25%;">Layer</th>
+        <th style="width:35%;">Technologies Used</th>
+        <th style="width:40%;">Key Responsibilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend Framework</strong></td>
+        <td>Next.js 14 (App Router), React 18, TypeScript</td>
+        <td>Server components, client interactivity, static and dynamic route optimization.</td>
+      </tr>
+      <tr>
+        <td><strong>Styling & Design</strong></td>
+        <td>Tailwind CSS, Lucide Icons, Custom Glassmorphism</td>
+        <td>Frosted glass aesthetics (<code>backdrop-filter: blur</code>), responsive layouts, dark charcoal typography.</td>
+      </tr>
+      <tr>
+        <td><strong>Validation & Safety</strong></td>
+        <td>Zod, React Hook Form</td>
+        <td>Strict input schema validation, expiry dates, doctor registration numbers, phone numbers.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend API</strong></td>
+        <td>Next.js Route Handlers (RESTful)</td>
+        <td>Endpoints for medicine listings, prescription claims, blood matching, pledges, and admin logs.</td>
+      </tr>
+      <tr>
+        <td><strong>Data Persistence</strong></td>
+        <td>In-Memory Store / Supabase PostgreSQL</td>
+        <td>Multi-table relational schema with Row Level Security (RLS) policies and automatic fallback.</td>
+      </tr>
+      <tr>
+        <td><strong>Quality Assurance</strong></td>
+        <td>Vitest, TypeScript (<code>tsc --noEmit</code>)</td>
+        <td>15 automated test suites covering data integrity, search filters, and Zod schemas.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.1 Glassmorphism UI Architecture</h3>
+  <p>
+    The visual interface incorporates custom Glassmorphism styles located in <code>src/app/globals.css</code>:
+  </p>
+  <ul>
+    <li><code>.glass-panel</code>: Translucent background (<code>rgba(255, 255, 255, 0.78)</code>) with <code>backdrop-filter: blur(16px)</code> and a subtle white border (<code>border: 1px solid rgba(255, 255, 255, 0.6)</code>).</li>
+    <li><code>.glass-card-hover</code>: Provides elevation and subtle scale transition on hover for interactive listings.</li>
+    <li><code>.glass-nav</code>: Sticky top navigation bar blending seamlessly with page contents without obstructing emergency bars.</li>
+  </ul>
+
+  <h3>3.2 API Route Directory</h3>
+  <table class="avoid-break">
+    <thead>
+      <tr>
+        <th>Endpoint</th>
+        <th>Method</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>/api/medicine/listings</code></td>
+        <td>GET / POST</td>
+        <td>Filter available surplus medicines or post a new 50% discount / free donation listing.</td>
+      </tr>
+      <tr>
+        <td><code>/api/medicine/claims</code></td>
+        <td>GET / POST</td>
+        <td>Submit a claim with doctor prescription upload; admin review status.</td>
+      </tr>
+      <tr>
+        <td><code>/api/blood/requests</code></td>
+        <td>GET / POST</td>
+        <td>Fetch urgent blood appeals with filters (blood group, city, urgency) or create request.</td>
+      </tr>
+      <tr>
+        <td><code>/api/blood/donors</code></td>
+        <td>GET / POST</td>
+        <td>Register as voluntary blood donor or query available donors within locality radius.</td>
+      </tr>
+      <tr>
+        <td><code>/api/organ/pledge</code></td>
+        <td>POST</td>
+        <td>Record citizen voluntary awareness pledge and return NOTTO guidance links.</td>
+      </tr>
+      <tr>
+        <td><code>/api/admin/verifications</code></td>
+        <td>GET / POST</td>
+        <td>Review and approve/reject provider credentials and medical claims.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ================= CHAPTER 4 ================= -->
+  <div class="page-break"></div>
+  <h2>Chapter 4: User Roles & Permissions Matrix</h2>
+
+  <table class="avoid-break">
+    <thead>
+      <tr>
+        <th>Capability / Workflow</th>
+        <th>Public / Guest</th>
+        <th>Patient / Caregiver</th>
+        <th>Blood Donor</th>
+        <th>Provider</th>
+        <th>Admin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Browse Blood & Medicine Listings</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>Post Blood / Assistance Request</td>
+        <td>Login Required</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>List Surplus Medicine (50% Off)</td>
+        <td>Login Required</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>Claim Medicine with Prescription</td>
+        <td>Login Required</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>Register as Voluntary Blood Donor</td>
+        <td>Login Required</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>Manage Hospital / Blood Bank Profile</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>✅ Yes</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>Approve Provider Verifications</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>✅ Yes</td>
+      </tr>
+      <tr>
+        <td>Audit Logs & System Monitoring</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td>✅ Yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ================= CHAPTER 5 ================= -->
+  <div class="page-break"></div>
+  <h2>Chapter 5: Detailed Step-by-Step User Manual</h2>
+
+  <h3>5.1 Listing Surplus Leftover Medicines at 50% Off</h3>
+  <p>
+    When a medical treatment finishes or a doctor alters a prescription, leftover medicines often sit unused. MedShare enables users to safely list unexpired surplus medicines at half price (50% of MRP) or donate them for free.
+  </p>
+
+  <div class="step-box">
+    <span class="step-num">Step 1</span><strong>Navigate to Listing Form:</strong>
+    Click <code>List Medicine (50% Off)</code> in the top navigation bar or browse to <code>http://localhost:3000/medicine/list</code>.
+  </div>
+
+  <div class="step-box">
+    <span class="step-num">Step 2</span><strong>Enter Medicine & Batch Particulars:</strong>
+    Fill in the commercial brand name (e.g. <em>Augmentin 625 Duo</em>), dosage (e.g. <em>625mg</em>), manufacturer, and therapeutic category (Antibiotic, Cardiac, Diabetes, etc.). Provide the authentic Batch Number printed on the pack.
+  </div>
+
+  <div class="step-box">
+    <span class="step-num">Step 3</span><strong>Apply 50% Discount or Free Donation:</strong>
+    Enter the Original MRP (₹). Click the green <strong>"Set Flat 50% Off"</strong> button — the system automatically computes the legally permitted resale price. Alternatively, toggle <em>"100% Free Donation"</em> for charitable distribution.
+  </div>
+
+  <div class="step-box">
+    <span class="step-num">Step 4</span><strong>Expiry & Packaging Declarations:</strong>
+    Select the expiry date (must be &ge;30 days in the future). Choose the packaging condition:
+    <ul>
+      <li><code>Sealed Blister / Strip</code> (Intact aluminum/foil seal)</li>
+      <li><code>Unopened Bottle</code> (Factory induction seal unbroken)</li>
+      <li><code>Intact Box / Vial</code></li>
+    </ul>
+    Acknowledge the statutory safety declaration and click <strong>"Publish Surplus Medicine Listing"</strong>.
+  </div>
+
+  <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;">
+
+  <h3>5.2 Claiming Medicines with Doctor Prescription Upload</h3>
+  <p>
+    Patients needing affordable medicines can claim available listings at 50% discount or free:
+  </p>
+
+  <div class="step-box">
+    <span class="step-num">Step 1</span><strong>Browse Directory:</strong>
+    Visit <code>http://localhost:3000/medicine</code>. Filter listings by category, city, or search by drug name.
+  </div>
+
+  <div class="step-box">
+    <span class="step-num">Step 2</span><strong>Open Claim Modal:</strong>
+    On the selected medicine card, click <strong>"Claim with Prescription"</strong>.
+  </div>
+
+  <div class="step-box">
+    <span class="step-num">Step 3</span><strong>Upload Valid Prescription:</strong>
+    Enter:
+    <ul>
+      <li>Patient Legal Name</li>
+      <li>Prescribing Doctor's Name & State Medical Council Registration Number</li>
+      <li>Upload clear image or PDF of doctor's prescription with valid date and signature</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <span class="step-num">Step 4</span><strong>Verification & Pickup:</strong>
+    The platform records the claim with status <code>pending_verification</code>. Once validated, the patient receives seller coordination details to complete exchange.
+  </div>
+
+  <!-- ================= CHAPTER 5 (CONT.) ================= -->
+  <div class="page-break"></div>
+  <h3>5.3 Voluntary Blood Requests & Donor Coordination</h3>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4>Posting an Urgent Blood Request</h4>
+      <p style="font-size:8.5pt; color:#475569;">
+        1. Open <code>/blood/request</code>.<br>
+        2. Select Blood Group (A+, B+, O+, AB+, etc.) and Component (Whole Blood, PRBC, Platelets, FFP).<br>
+        3. Enter Hospital Name, Units Needed, City, and Urgency Level (Critical, Urgent, Standard).<br>
+        4. Submit to alert nearby registered voluntary donors.
+      </p>
+    </div>
+    <div class="card">
+      <h4>Registering as Voluntary Blood Donor</h4>
+      <p style="font-size:8.5pt; color:#475569;">
+        1. Open <code>/blood/donate</code>.<br>
+        2. Provide Blood Group, City, Locality, and Preferred Contact Channel.<br>
+        3. Confirm eligibility (&ge;18 years, &ge;45 kg, no high-risk conditions).<br>
+        4. Your phone number is kept private until you choose to respond to an emergency.
+      </p>
+    </div>
+  </div>
+
+  <h3>5.4 Lawful Organ Donation Awareness & NOTTO Registration</h3>
+  <p>
+    The organ donation module (<code>/organ-donation</code>) serves an essential statutory and educational mission:
+  </p>
+  <ul>
+    <li><strong>Living Donation Guidance:</strong> Explains that living donation is restricted to near-relatives under Section 9 of THOA 1994, eliminating commercial middle-men.</li>
+    <li><strong>Deceased Donation Awareness:</strong> Outlines how brain-stem death certified by a panel of four doctors in an ICU allows a donor to save up to 8 lives.</li>
+    <li><strong>Voluntary Awareness Pledge:</strong> Allows citizens to select organs/tissues (Corneas, Kidneys, Liver, Heart, Lungs) they wish to pledge morally.</li>
+    <li><strong>Official NOTTO Integration:</strong> Directs users to the Government of India National Organ and Tissue Transplant Organization portal (<a href="https://notto.mohfw.gov.in" target="_blank">notto.mohfw.gov.in</a>) to obtain an official government donor card.</li>
+  </ul>
+
+  <h3>5.5 Medical Equipment Loans & Support Requests</h3>
+  <p>
+    Located at <code>/assistance</code>:
+  </p>
+  <ul>
+    <li>Patients can request loans of physical mobility equipment (wheelchairs, walkers, hospital beds, oxygen concentrators).</li>
+    <li>Volunteers and NGO partners coordinate returns and sanitization between users without commercial fees.</li>
+  </ul>
+
+  <h3>5.6 Healthcare Resource Directory</h3>
+  <p>
+    Located at <code>/directory</code>:
+  </p>
+  <ul>
+    <li>Provides real, verified locations of government civil hospitals, accredited blood banks, subsidized Jan Aushadhi kendras, and organ retrieval centers.</li>
+    <li>Features filter by category, operational hours, address, and verified status badges.</li>
+  </ul>
+
+  <!-- ================= CHAPTER 6 & 7 ================= -->
+  <div class="page-break"></div>
+  <h2>Chapter 6: Administrator Control Center</h2>
+
+  <p>
+    The Administrator Control Center is accessible at <code>/dashboard/admin</code> for authorized administrative accounts. It provides high-integrity oversight:
+  </p>
+  <div class="card-grid">
+    <div class="card">
+      <h4>Provider Verifications</h4>
+      <p style="font-size:8.5pt; color:#475569;">
+        Reviews clinic licenses, hospital registrations, and blood bank accreditations before granting "Verified Provider" badges.
+      </p>
+    </div>
+    <div class="card">
+      <h4>Prescription Claim Audits</h4>
+      <p style="font-size:8.5pt; color:#475569;">
+        Inspects prescription images uploaded during surplus medicine claims to prevent misuse of scheduled formulations.
+      </p>
+    </div>
+    <div class="card">
+      <h4>Audit Log Stream</h4>
+      <p style="font-size:8.5pt; color:#475569;">
+        Maintains an immutable record of sensitive transactions: user logins, blood matches, listing updates, and claim status changes.
+      </p>
+    </div>
+    <div class="card">
+      <h4>Safety Moderation</h4>
+      <p style="font-size:8.5pt; color:#475569;">
+        Instantly deactivates flagged listings, suspicious requests, or non-compliant peer submissions.
+      </p>
+    </div>
+  </div>
+
+  <h2>Chapter 7: Installation, Development & Deployment</h2>
+
+  <h3>7.1 Prerequisites</h3>
+  <ul>
+    <li>Node.js version 18.17.0 or higher</li>
+    <li>npm version 9.0.0 or higher</li>
+    <li>Git version control</li>
+  </ul>
+
+  <h3>7.2 Clone and Setup</h3>
+  <pre><code># 1. Clone repository from GitHub
+git clone https://github.com/adarsh717/medshare.git
+
+# 2. Navigate to project root
+cd medshare
+
+# 3. Install dependencies
+npm install
+
+# 4. Start local development server
+npm run dev
+
+# Application will be accessible at: http://localhost:3000</code></pre>
+
+  <h3>7.3 Testing & Build Verification</h3>
+  <pre><code># Run automated test suites (Vitest)
+npm test
+
+# Run strict TypeScript compiler checks
+npm run typecheck
+
+# Build optimized production bundle
+npm run build</code></pre>
+
+  <!-- ================= CHAPTER 8 ================= -->
+  <div class="page-break"></div>
+  <h2>Chapter 8: Frequently Asked Questions (FAQ) & Troubleshooting</h2>
+
+  <div class="avoid-break" style="margin-bottom:14px;">
+    <h4>Q1: Surplus medicine 50% discount par hi kyu bikti hai? (Why only 50% discount?)</h4>
+    <p>
+      <strong>A:</strong> Leftover medicine exchange ka maksad commercial profit banana nahi balki medicine wastage rokna aur zarooratmand ko saste daam me authentic dawa milna hai. 50% cap rakhne se hoarding aur black marketing rukti hai aur dawa affordable rehti hai.
+    </p>
+  </div>
+
+  <div class="avoid-break" style="margin-bottom:14px;">
+    <h4>Q2: Dawa lene ke liye Prescription upload karna kyu zaroori hai?</h4>
+    <p>
+      <strong>A:</strong> Drugs and Cosmetics Act ke mutabiq Schedule H aur H1 prescription drugs bina registered doctor ke prescription ke kisi ko nahi di jaa sakti. MedShare par patient safety sarvopari hai, isliye prescription verification mandatory hai.
+    </p>
+  </div>
+
+  <div class="avoid-break" style="margin-bottom:14px;">
+    <h4>Q3: Kya MedShare par organ khareed ya bech sakte hain?</h4>
+    <p>
+      <strong>A:</strong> <strong>Bilkul nahi!</strong> Organ trading Bharat me non-bailable apradh hai (THOA 1994). MedShare par sirf voluntary awareness pledge liya jaa sakta hai aur official Government NOTTO portal se donor card download kiya jaa sakta hai.
+    </p>
+  </div>
+
+  <div class="avoid-break" style="margin-bottom:14px;">
+    <h4>Q4: Kya Blood Donor ka mobile number public hota hai?</h4>
+    <p>
+      <strong>A:</strong> Nahi. Blood donors ki privacy safeguard ki jaati hai. Donors ka number tabhi reveal hota hai jab dono parties consent deti hain.
+    </p>
+  </div>
+
+  <div class="avoid-break" style="margin-bottom:14px;">
+    <h4>Q5: Dusre system / computer par ye project kaise run hoga?</h4>
+    <p>
+      <strong>A:</strong> Dusre computer par sirf Git aur Node.js install hona chahiye. Wahan <code>git clone https://github.com/adarsh717/medshare.git</code> run karein, fir <code>npm install</code> aur <code>npm run dev</code> chalayein. Web app turant <code>http://localhost:3000</code> par chalne lagega.
+    </p>
+  </div>
+
+  <!-- Signoff Box -->
+  <div class="card avoid-break" style="background:#f0fdfa; border-color:#0d9488; margin-top:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h4 style="color:#0f766e; margin-bottom:2px;">MedShare Engineering & Documentation Team</h4>
+        <p style="font-size:8pt; color:#475569; margin:0;">
+          All modules verified with strict type safety, Vitest unit tests, and automated Next.js production builds.
+        </p>
+      </div>
+      <span class="badge badge-teal" style="font-size:9pt; padding:4px 10px;">Production Certified</span>
+    </div>
+  </div>
+
+</body>
+</html>
