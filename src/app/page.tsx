@@ -146,7 +146,7 @@ export default async function HomePage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{med.city}, {med.state}</span>
+                      <span className="truncate">{med.locality ? `${med.locality}, ` : ""}{med.city}</span>
                     </div>
                   </div>
                 </div>

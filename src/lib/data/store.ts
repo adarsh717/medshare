@@ -22,6 +22,7 @@ import {
   MedicineListingStatus,
   ClaimVerificationStatus,
 } from "@/types";
+import { gorakhpurSurplusMedicines } from "./gorakhpurMedicines";
 
 // In-Memory Seed Storage for robust operation & test execution
 interface UserRecord extends UserProfile {
@@ -525,6 +526,11 @@ class MedShareDataStore {
       updatedAt: "2026-10-14T09:15:00.000Z",
     };
     this.surplusMedicines.set(surplus4.id, surplus4);
+
+    // Seed Curated Gorakhpur Surplus Medicines (~210 items across Gorakhpur)
+    gorakhpurSurplusMedicines.forEach((med) => {
+      this.surplusMedicines.set(med.id, med);
+    });
 
     // Seed Audit Log
     this.auditLogs.push({
@@ -1203,6 +1209,7 @@ class MedShareDataStore {
           m.dosage.toLowerCase().includes(q) ||
           m.category.toLowerCase().includes(q) ||
           m.city.toLowerCase().includes(q) ||
+          (m.locality && m.locality.toLowerCase().includes(q)) ||
           (m.manufacturer && m.manufacturer.toLowerCase().includes(q))
       );
     }

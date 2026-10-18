@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") || undefined;
     const maxPriceStr = searchParams.get("maxPrice");
     const maxPrice = maxPriceStr ? parseFloat(maxPriceStr) : undefined;
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const limit = parseInt(searchParams.get("limit") || "250", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     const result = await dataStore.getSurplusMedicines({

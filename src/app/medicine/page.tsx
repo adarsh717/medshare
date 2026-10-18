@@ -51,13 +51,18 @@ export default function MedicineExchangePage() {
   const [claimConsent, setClaimConsent] = React.useState(false);
   const [isSubmittingClaim, setIsSubmittingClaim] = React.useState(false);
 
-  const cities = ["all", "New Delhi", "Mumbai", "Bengaluru", "Chennai", "Kolkata"];
+  const cities = ["all", "Gorakhpur", "New Delhi", "Mumbai", "Bengaluru", "Chennai", "Kolkata"];
   const categories = [
     "all",
     "Antibiotics",
-    "Diabetes Care",
     "Cardiology & Blood Pressure",
+    "Diabetes Care",
     "Gastrointestinal",
+    "Respiratory & Asthma",
+    "Pain Relief & Ortho",
+    "Neurology",
+    "Vitamins & Supplements",
+    "Dermatology",
     "General Healthcare",
   ];
 
@@ -65,6 +70,7 @@ export default function MedicineExchangePage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
+      params.append("limit", "250");
       if (search.trim()) params.append("search", search.trim());
       if (selectedCity !== "all") params.append("city", selectedCity);
       if (selectedCategory !== "all") params.append("category", selectedCategory);
@@ -369,7 +375,7 @@ export default function MedicineExchangePage() {
                     <span className="flex items-center gap-1 text-slate-500">
                       <MapPin className="h-3.5 w-3.5 text-slate-400" /> Location:
                     </span>
-                    <span className="font-medium text-slate-700 truncate max-w-[140px]">
+                    <span className="font-medium text-slate-700 truncate max-w-[190px]">
                       {med.locality ? `${med.locality}, ` : ""}{med.city}
                     </span>
                   </div>
