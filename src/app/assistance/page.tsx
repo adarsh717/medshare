@@ -26,6 +26,9 @@ export default function AssistancePortalPage() {
   const [search, setSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
+  const [selectedCity, setSelectedCity] = React.useState<string>("all");
+
+  const cities = ["all", "Gorakhpur", "Lucknow", "Varanasi", "New Delhi", "Mumbai", "Bengaluru"];
 
   const fetchRequests = React.useCallback(async () => {
     setIsLoading(true);
@@ -33,6 +36,7 @@ export default function AssistancePortalPage() {
       const params = new URLSearchParams();
       if (selectedCategory !== "all") params.append("category", selectedCategory);
       if (selectedStatus !== "all") params.append("status", selectedStatus);
+      if (selectedCity !== "all") params.append("city", selectedCity);
       if (search.trim()) params.append("search", search.trim());
 
       const res = await fetch(`/api/requests?${params.toString()}`);
@@ -46,7 +50,7 @@ export default function AssistancePortalPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCategory, selectedStatus, search]);
+  }, [selectedCategory, selectedStatus, selectedCity, search]);
 
   React.useEffect(() => {
     fetchRequests();
@@ -116,6 +120,21 @@ export default function AssistancePortalPage() {
               <option value="resolved">Resolved</option>
             </select>
 
+            <select
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-300 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-teal-700 bg-white font-medium"
+            >
+              <option value="all">All Cities</option>
+              {cities
+                .filter((c) => c !== "all")
+                .map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+            </select>
+
             <Button
               variant="outline"
               size="sm"
@@ -123,6 +142,7 @@ export default function AssistancePortalPage() {
                 setSearch("");
                 setSelectedCategory("all");
                 setSelectedStatus("all");
+                setSelectedCity("all");
               }}
               className="h-9 text-xs"
             >

@@ -21,13 +21,19 @@ import {
   MedicineClaimRequest,
   MedicineListingStatus,
   ClaimVerificationStatus,
+  OrganDonationPledge,
 } from "@/types";
 import { gorakhpurSurplusMedicines } from "./gorakhpurMedicines";
-
-// In-Memory Seed Storage for robust operation & test execution
-interface UserRecord extends UserProfile {
-  passwordHash?: string;
-}
+import {
+  UserRecord,
+  seedResources,
+  seedUsers,
+  seedDonorProfiles,
+  seedRequestsData,
+  seedProviderProfiles,
+  seedOrganPledges,
+  seedMedicineClaims,
+} from "./seedData";
 
 class MedShareDataStore {
   private users: Map<string, UserRecord> = new Map();
@@ -37,6 +43,7 @@ class MedShareDataStore {
   private healthcareResources: Map<string, HealthcareResource> = new Map();
   private providerProfiles: Map<string, ProviderProfile> = new Map();
   private verificationSubmissions: Map<string, ProviderVerificationSubmission> = new Map();
+  private organPledges: Map<string, OrganDonationPledge> = new Map();
   private requestResponses: Map<string, RequestResponse> = new Map();
   private notifications: Map<string, InAppNotification> = new Map();
   private auditLogs: AuditLog[] = [];
@@ -49,383 +56,31 @@ class MedShareDataStore {
 
   private seedInitialData() {
     // 1. Initial Verified Healthcare Resources (Directory)
-    const initialResources: HealthcareResource[] = [
-      {
-        id: "res-001",
-        name: "All India Institute of Medical Sciences (AIIMS)",
-        category: "hospital",
-        address: "Sri Aurobindo Marg, Ansari Nagar East",
-        city: "New Delhi",
-        state: "Delhi",
-        pincode: "110029",
-        phone: "+91-11-26588500",
-        email: "info@aiims.edu",
-        websiteUrl: "https://www.aiims.edu",
-        operationalHours: "24x7 Emergency and Trauma Services",
-        servicesOffered: ["Emergency Medicine", "Oncology", "Cardiology", "Nephrology", "Organ Transplant", "Blood Bank"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-002",
-        name: "Indian Red Cross Society National Blood Bank",
-        category: "blood_bank",
-        address: "1, Red Cross Road",
-        city: "New Delhi",
-        state: "Delhi",
-        pincode: "110001",
-        phone: "+91-11-23716441",
-        email: "bloodbank@indianredcross.org",
-        websiteUrl: "https://www.indianredcross.org",
-        operationalHours: "24 Hours Voluntary Blood Banking & Component Separation",
-        servicesOffered: ["Whole Blood", "Packed Red Cells", "Platelets", "Fresh Frozen Plasma", "Apheresis"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-003",
-        name: "Tata Memorial Hospital & Cancer Center",
-        category: "hospital",
-        address: "Dr. E Borges Road, Parel",
-        city: "Mumbai",
-        state: "Maharashtra",
-        pincode: "400012",
-        phone: "+91-22-24177000",
-        email: "crs@tmc.gov.in",
-        websiteUrl: "https://tmc.gov.in",
-        operationalHours: "24 Hours Oncology Care & Day Care Chemotherapy",
-        servicesOffered: ["Oncology Consultation", "Radiation Therapy", "Subsidized Medicine Cell", "Palliative Care", "Blood Bank"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-004",
-        name: "Rotary Blood Bank",
-        category: "blood_bank",
-        address: "56-57, Institutional Area, Sector 32",
-        city: "Gurugram",
-        state: "Haryana",
-        pincode: "122001",
-        phone: "+91-124-4061234",
-        email: "contact@rotarybloodbank.org",
-        websiteUrl: "https://www.rotarybloodbank.org",
-        operationalHours: "24x7 Voluntary Blood Donation & Component Delivery",
-        servicesOffered: ["Platelet Concentrates", "Leukodepleted Blood", "Cryoprecipitate", "Emergency Delivery Coordination"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-005",
-        name: "Postgraduate Institute of Medical Education and Research (PGIMER)",
-        category: "transplant_center",
-        address: "Sector 12",
-        city: "Chandigarh",
-        state: "Chandigarh",
-        pincode: "160012",
-        phone: "+91-172-2746018",
-        email: "pgimer-chd@nic.in",
-        websiteUrl: "https://pgimer.edu.in",
-        operationalHours: "24x7 Tertiary Care, ROTTO North Hub",
-        servicesOffered: ["Organ Retrieval Banking Organization (ORBO)", "Cornea Transplant", "Renal Transplant", "Liver Transplant"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-006",
-        name: "Pradhan Mantri Bhartiya Janaushadhi Kendra (Central Dispensary)",
-        category: "authorized_pharmacy",
-        address: "Near Safdarjung Hospital Gate No. 2, Ring Road",
-        city: "New Delhi",
-        state: "Delhi",
-        pincode: "110029",
-        phone: "+91-11-26707444",
-        email: "contact@janaushadhi.gov.in",
-        websiteUrl: "http://janaushadhi.gov.in",
-        operationalHours: "08:00 AM - 10:00 PM Daily",
-        servicesOffered: ["Subsidized Generic Medicines", "Chronic Care Assistance", "Surgical Consumables", "Insulin & Diabetes Care"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-007",
-        name: "Victoria Hospital (Bangalore Medical College)",
-        category: "hospital",
-        address: "Fort Road, near City Market",
-        city: "Bengaluru",
-        state: "Karnataka",
-        pincode: "560002",
-        phone: "+91-80-26701150",
-        email: "deanbmc@gmail.com",
-        websiteUrl: "https://bmcri.edu.in",
-        operationalHours: "24x7 Government Tertiary Care & Emergency",
-        servicesOffered: ["General Surgery", "Burn Center", "Blood Bank", "Charitable Medicine Counter", "Dialysis Unit"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "res-008",
-        name: "Jeevan Stem Cell & Blood Bank",
-        category: "blood_bank",
-        address: "22, Ritherdon Road, Vepery",
-        city: "Chennai",
-        state: "Tamil Nadu",
-        pincode: "600007",
-        phone: "+91-44-25322525",
-        email: "jeevan@jeevan.org",
-        websiteUrl: "https://jeevan.org",
-        operationalHours: "24 Hours Component Testing & Distribution",
-        servicesOffered: ["Platelets", "Stem Cell Registry", "Whole Blood", "Rare Blood Group Registry"],
-        verified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ];
+    seedResources.forEach((r) => this.healthcareResources.set(r.id, r));
 
-    initialResources.forEach((r) => this.healthcareResources.set(r.id, r));
+    // 2. Demo Users & Voluntary Donors across ALL Blood Groups (A+, A-, B+, B-, AB+, AB-, O+, O-)
+    seedUsers.forEach((u) => this.users.set(u.id, u));
+    seedDonorProfiles.forEach((d) => this.donorProfiles.set(d.id, d));
 
-    // 2. Demo Users for immediate testing
-    const demoAdmin: UserRecord = {
-      id: "usr-admin-01",
-      email: "admin@medshare.org",
-      fullName: "Platform Administrator",
-      phoneNumber: "+91-9876543210",
-      role: "admin",
-      city: "New Delhi",
-      state: "Delhi",
-      createdAt: "2026-01-01T00:00:00.000Z",
-      updatedAt: "2026-01-01T00:00:00.000Z",
-      passwordHash: "AdminPass@2026",
-    };
-    this.users.set(demoAdmin.id, demoAdmin);
+    // 3. Emergency Blood Requests & Medical Assistance Requests
+    seedRequestsData.bloodDetails.forEach((bd) => this.bloodDetails.set(bd.id, bd));
+    seedRequestsData.requests.forEach((req) => {
+      const bld = seedRequestsData.bloodDetails.find((b) => b.requestId === req.id);
+      if (bld) req.bloodDetails = bld;
+      this.assistanceRequests.set(req.id, req);
+    });
 
-    const demoPatient: UserRecord = {
-      id: "usr-patient-01",
-      email: "patient@medshare.org",
-      fullName: "Arun Verma",
-      phoneNumber: "+91-9876543211",
-      role: "patient",
-      city: "New Delhi",
-      state: "Delhi",
-      createdAt: "2026-01-05T00:00:00.000Z",
-      updatedAt: "2026-01-05T00:00:00.000Z",
-      passwordHash: "PatientPass@2026",
-    };
-    this.users.set(demoPatient.id, demoPatient);
+    // 4. Provider Profiles & Verification Submissions
+    seedProviderProfiles.profiles.forEach((p) => this.providerProfiles.set(p.id, p));
+    seedProviderProfiles.submissions.forEach((s) => this.verificationSubmissions.set(s.id, s));
 
-    const demoDonor: UserRecord = {
-      id: "usr-donor-01",
-      email: "donor@medshare.org",
-      fullName: "Pooja Sharma",
-      phoneNumber: "+91-9876543212",
-      role: "donor",
-      city: "New Delhi",
-      state: "Delhi",
-      createdAt: "2026-01-06T00:00:00.000Z",
-      updatedAt: "2026-01-06T00:00:00.000Z",
-      passwordHash: "DonorPass@2026",
-    };
-    this.users.set(demoDonor.id, demoDonor);
+    // 5. Organ Donation Pledges
+    seedOrganPledges.forEach((plg) => this.organPledges.set(plg.id, plg));
 
-    const demoProvider: UserRecord = {
-      id: "usr-provider-01",
-      email: "provider@medshare.org",
-      fullName: "Dr. Rajesh Kulkarni",
-      phoneNumber: "+91-9876543213",
-      role: "provider",
-      city: "Mumbai",
-      state: "Maharashtra",
-      createdAt: "2026-01-07T00:00:00.000Z",
-      updatedAt: "2026-01-07T00:00:00.000Z",
-      passwordHash: "ProviderPass@2026",
-    };
-    this.users.set(demoProvider.id, demoProvider);
-
-    // Seed Donor Profile for demo donor
-    const donorProf: DonorProfile = {
-      id: "dnr-001",
-      userId: demoDonor.id,
-      bloodGroup: "O+",
-      city: "New Delhi",
-      state: "Delhi",
-      locality: "Hauz Khas",
-      availabilityStatus: "available",
-      preferredContactMethod: "in_app",
-      consentToContact: true,
-      lastDonationDate: "2026-07-15",
-      notes: "Regular voluntary donor, comfortable reaching South Delhi hospitals within 45 minutes.",
-      createdAt: "2026-01-06T00:00:00.000Z",
-      updatedAt: "2026-01-06T00:00:00.000Z",
-      donorName: demoDonor.fullName,
-    };
-    this.donorProfiles.set(donorProf.id, donorProf);
-
-    // Additional sample donor for matching demonstration
-    const donorProf2: DonorProfile = {
-      id: "dnr-002",
-      userId: "usr-donor-02",
-      bloodGroup: "A+",
-      city: "Mumbai",
-      state: "Maharashtra",
-      locality: "Andheri West",
-      availabilityStatus: "available",
-      preferredContactMethod: "in_app",
-      consentToContact: true,
-      lastDonationDate: "2026-06-10",
-      notes: "Voluntary donor registered for emergency calls in Western suburbs.",
-      createdAt: "2026-01-08T00:00:00.000Z",
-      updatedAt: "2026-01-08T00:00:00.000Z",
-      donorName: "Rohan Desai",
-    };
-    this.donorProfiles.set(donorProf2.id, donorProf2);
-
-    // Seed Sample Blood Assistance Request
-    const req1: AssistanceRequest = {
-      id: "req-b-001",
-      userId: demoPatient.id,
-      category: "blood",
-      title: "Urgent O+ Platelets Required for Dengue Treatment",
-      description: "Patient admitted in ICU at AIIMS New Delhi requiring 2 units of single-donor platelets urgently.",
-      city: "New Delhi",
-      state: "Delhi",
-      locality: "Ansari Nagar",
-      priority: "critical",
-      status: "submitted",
-      preferredContactMethod: "in_app",
-      consentGiven: true,
-      createdAt: "2026-10-15T08:30:00.000Z",
-      updatedAt: "2026-10-15T08:30:00.000Z",
-      userName: demoPatient.fullName,
-      userEmail: demoPatient.email,
-    };
-    this.assistanceRequests.set(req1.id, req1);
-
-    const bloodDetail1: BloodRequestDetail = {
-      id: "bld-001",
-      requestId: req1.id,
-      patientName: "Smt. Sunita Verma",
-      hospitalName: "AIIMS New Delhi",
-      hospitalAddress: "Sri Aurobindo Marg, Ansari Nagar",
-      bloodGroup: "O+",
-      bloodComponent: "platelets",
-      unitsNeeded: 2,
-      requiredDate: "2026-10-18",
-      urgencyLevel: "critical",
-      medicalNotes: "IPD Reg No: 2026/8941. Requisition verified by Attending Hematologist.",
-      createdAt: "2026-10-15T08:30:00.000Z",
-    };
-    this.bloodDetails.set(bloodDetail1.id, bloodDetail1);
-    req1.bloodDetails = bloodDetail1;
-
-    // Seed Sample Medicine Assistance Request
-    const req2: AssistanceRequest = {
-      id: "req-m-001",
-      userId: demoPatient.id,
-      category: "medicine",
-      title: "Assistance Locating Subsidized Oncology Medication",
-      description: "Seeking authorized pharmacy referral for generic Imatinib 400mg prescribed by Tata Memorial Hospital.",
-      city: "Mumbai",
-      state: "Maharashtra",
-      locality: "Parel",
-      priority: "standard",
-      status: "under_review",
-      preferredContactMethod: "in_app",
-      consentGiven: true,
-      createdAt: "2026-10-14T11:00:00.000Z",
-      updatedAt: "2026-10-14T11:00:00.000Z",
-      userName: demoPatient.fullName,
-      userEmail: demoPatient.email,
-    };
-    this.assistanceRequests.set(req2.id, req2);
-
-    // Seed Sample Equipment Assistance Request
-    const req3: AssistanceRequest = {
-      id: "req-e-001",
-      userId: demoPatient.id,
-      category: "equipment",
-      title: "Request for Wheelchair Support for Elderly Patient",
-      description: "Looking for charitable lending or equipment assistance for a foldable manual wheelchair following hip replacement recovery.",
-      city: "Bengaluru",
-      state: "Karnataka",
-      locality: "Jayanagar",
-      priority: "standard",
-      status: "matched",
-      preferredContactMethod: "in_app",
-      consentGiven: true,
-      createdAt: "2026-10-12T14:20:00.000Z",
-      updatedAt: "2026-10-13T10:00:00.000Z",
-      userName: demoPatient.fullName,
-      userEmail: demoPatient.email,
-    };
-    this.assistanceRequests.set(req3.id, req3);
-
-    // Seed Provider Profile & Pending Verification
-    const provProf: ProviderProfile = {
-      id: "prv-001",
-      userId: demoProvider.id,
-      organizationName: "Kulkarni Community Healthcare Trust",
-      organizationType: "clinic",
-      licenseNumber: "MH-MC-2019-8921",
-      city: "Mumbai",
-      state: "Maharashtra",
-      address: "42, SV Road, Bandra West",
-      contactPhone: "+91-22-26401122",
-      contactEmail: "admin@kulkarnihealth.org",
-      websiteUrl: "https://kulkarnihealth.org",
-      verificationStatus: "pending",
-      createdAt: "2026-01-07T00:00:00.000Z",
-      updatedAt: "2026-01-07T00:00:00.000Z",
-    };
-    this.providerProfiles.set(provProf.id, provProf);
-
-    const sub1: ProviderVerificationSubmission = {
-      id: "sub-001",
-      providerId: provProf.id,
-      organizationName: provProf.organizationName,
-      documentName: "Maharashtra State Clinical Establishment Act Registration",
-      documentType: "State Regulatory License",
-      documentUrl: "https://documents.medshare.org/licenses/mh-mc-2019-8921.pdf",
-      notes: "Annual renewal certificate attached along with medical superintendent credentials.",
-      status: "pending",
-      createdAt: "2026-10-14T09:00:00.000Z",
-    };
-    this.verificationSubmissions.set(sub1.id, sub1);
-
-    // Seed In-App Notifications
-    const notif1: InAppNotification = {
-      id: "notif-001",
-      userId: demoPatient.id,
-      title: "Blood Request Submitted",
-      message: "Your request for 2 units of O+ Platelets at AIIMS New Delhi has been published to voluntary donors.",
-      link: `/blood/requests/${req1.id}`,
-      type: "request_status",
-      isRead: false,
-      createdAt: "2026-10-15T08:31:00.000Z",
-    };
-    this.notifications.set(notif1.id, notif1);
-
-    const notif2: InAppNotification = {
-      id: "notif-002",
-      userId: demoDonor.id,
-      title: "Matching Blood Request Nearby",
-      message: "A patient at AIIMS New Delhi is in urgent need of O+ platelets. Click to review request details.",
-      link: `/blood/requests/${req1.id}`,
-      type: "match_found",
-      isRead: false,
-      createdAt: "2026-10-15T08:35:00.000Z",
-    };
-    this.notifications.set(notif2.id, notif2);
-
-    // Seed Initial Verified Surplus Medicines (50% Off / Resale / Donation with Sealed Packaging)
+    // 6. Verified Surplus Medicines (National & Curated Gorakhpur Inventory)
     const surplus1: SurplusMedicineListing = {
       id: "med-001",
-      userId: demoPatient.id,
+      userId: "usr-patient-01",
       sellerName: "Arun Verma",
       sellerContact: "+91-9876543211",
       medicineName: "Augmentin 625 Duo",
@@ -451,7 +106,7 @@ class MedShareDataStore {
 
     const surplus2: SurplusMedicineListing = {
       id: "med-002",
-      userId: demoDonor.id,
+      userId: "usr-donor-01",
       sellerName: "Pooja Sharma",
       sellerContact: "+91-9876543212",
       medicineName: "Januvia 100mg",
@@ -527,89 +182,35 @@ class MedShareDataStore {
     };
     this.surplusMedicines.set(surplus4.id, surplus4);
 
-    // Seed Curated Gorakhpur Surplus Medicines (~210 items across Gorakhpur)
     gorakhpurSurplusMedicines.forEach((med) => {
       this.surplusMedicines.set(med.id, med);
     });
 
-    // Seed Demo Medicine Claims (Prescription exchange tracking)
-    const demoClaim1: MedicineClaimRequest = {
-      id: "clm-demo-001",
-      listingId: "med-001",
-      listingTitle: "Augmentin 625 Duo (Amoxicillin 500mg + Clavulanic Acid 125mg)",
-      requesterId: demoPatient.id,
-      requesterName: demoPatient.fullName,
-      requesterPhone: demoPatient.phoneNumber || "+91-9876543211",
-      patientName: "Arun Verma",
-      doctorName: "Dr. Sanjeev Grover",
-      doctorRegNo: "DMC-45129",
-      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-augmentin-verma.pdf",
-      notes: "Sinusitis infection course prescribed for 5 days. Requesting sealed strip.",
-      status: "pending_verification",
-      sellerName: "Rahul Gupta",
-      sellerContact: "+91-9876543210",
-      locality: "Hauz Khas",
-      city: "New Delhi",
-      mrpPrice: 204,
-      offeredPrice: 102,
-      createdAt: "2026-10-18T10:00:00.000Z",
-    };
-    this.medicineClaims.set(demoClaim1.id, demoClaim1);
+    // 7. Seed Diverse Medicine Claims
+    seedMedicineClaims.forEach((clm) => this.medicineClaims.set(clm.id, clm));
 
-    const demoClaim2: MedicineClaimRequest = {
-      id: "clm-demo-002",
-      listingId: "med-002",
-      listingTitle: "Januvia 100mg (Sitagliptin Phosphate 100mg)",
-      requesterId: demoPatient.id,
-      requesterName: demoPatient.fullName,
-      requesterPhone: demoPatient.phoneNumber || "+91-9876543211",
-      patientName: "Meena Verma",
-      doctorName: "Dr. Ananya Ray",
-      doctorRegNo: "DMC-78901",
-      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-januvia-ray.pdf",
-      notes: "Ongoing monthly diabetes refill for elderly mother.",
-      status: "approved",
-      adminNotes: "Prescription verified with state medical register. Doctor license active. Safe for patient collection.",
-      reviewedBy: "Dr. Vikramaditya (Admin Officer)",
-      reviewedAt: "2026-10-18T11:30:00.000Z",
-      sellerName: "Pooja Sharma",
-      sellerContact: "+91-9876543212",
-      locality: "South Extension",
-      city: "New Delhi",
-      mrpPrice: 380,
-      offeredPrice: 190,
-      createdAt: "2026-10-17T14:00:00.000Z",
-    };
-    this.medicineClaims.set(demoClaim2.id, demoClaim2);
+    // 8. In-App Notifications
+    this.createNotification({
+      userId: "usr-patient-01",
+      title: "Blood Request Submitted",
+      message: "Your request for 2 units of O+ Platelets at AIIMS New Delhi has been published to voluntary donors.",
+      link: "/blood/requests/req-b-001",
+      type: "request_status",
+    });
 
-    const demoClaim3: MedicineClaimRequest = {
-      id: "clm-demo-003",
-      listingId: "gkp-001",
-      listingTitle: "Azithral 500 (Azithromycin 500mg)",
-      requesterId: "usr-patient-02",
-      requesterName: "Rohan Desai",
-      requesterPhone: "+91-9876543214",
-      patientName: "Suresh Desai",
-      doctorName: "Dr. P. K. Srivastava",
-      doctorRegNo: "UPMC-12490",
-      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-azithral-gkp.pdf",
-      notes: "Acute respiratory tract infection prescription from BRD Medical College Gorakhpur.",
-      status: "pending_verification",
-      sellerName: "Aakash Singh",
-      sellerContact: "+91-9450123401",
-      locality: "Golghar",
-      city: "Gorakhpur",
-      mrpPrice: 132,
-      offeredPrice: 66,
-      createdAt: "2026-10-18T12:00:00.000Z",
-    };
-    this.medicineClaims.set(demoClaim3.id, demoClaim3);
+    this.createNotification({
+      userId: "usr-donor-01",
+      title: "Matching Blood Request Nearby",
+      message: "A patient at AIIMS New Delhi is in urgent need of O+ platelets. Click to review request details.",
+      link: "/blood/requests/req-b-001",
+      type: "match_found",
+    });
 
-    // Seed Audit Log
+    // 9. System Audit Log
     this.auditLogs.push({
       id: "aud-001",
-      userId: demoAdmin.id,
-      userEmail: demoAdmin.email,
+      userId: "usr-admin-01",
+      userEmail: "admin@medshare.org",
       action: "SYSTEM_INITIALIZATION",
       entityType: "system",
       entityId: "core",
@@ -1591,6 +1192,26 @@ class MedShareDataStore {
 
   async getMedicineClaimById(claimId: string): Promise<MedicineClaimRequest | null> {
     return this.medicineClaims.get(claimId) || null;
+  }
+
+  // --- ORGAN DONATION PLEDGES ---
+  async getOrganPledges(): Promise<OrganDonationPledge[]> {
+    return Array.from(this.organPledges.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async createOrganPledge(
+    data: Omit<OrganDonationPledge, "id" | "createdAt">
+  ): Promise<OrganDonationPledge> {
+    const id = `plg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const pledge: OrganDonationPledge = {
+      ...data,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.organPledges.set(id, pledge);
+    return pledge;
   }
 }
 

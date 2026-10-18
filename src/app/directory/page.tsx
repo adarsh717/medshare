@@ -36,7 +36,7 @@ export default function DirectoryPage() {
     { value: "community_clinic", label: "Community Clinics" },
   ];
 
-  const cities = ["all", "New Delhi", "Mumbai", "Bengaluru", "Chennai", "Chandigarh", "Gurugram"];
+  const cities = ["all", "Gorakhpur", "Lucknow", "Varanasi", "New Delhi", "Mumbai", "Bengaluru", "Chennai", "Chandigarh", "Gurugram"];
 
   const fetchResources = React.useCallback(async () => {
     setIsLoading(true);

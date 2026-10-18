@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { OrganDonationPledge } from "@/types";
+import { Users, MapPin, Sparkles } from "lucide-react";
 
 export default function OrganDonationPage() {
   const { toast } = useToast();
@@ -33,6 +35,16 @@ export default function OrganDonationPage() {
   const [statutoryAcknowledged, setStatutoryAcknowledged] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submittedPledge, setSubmittedPledge] = React.useState(false);
+  const [pledges, setPledges] = React.useState<OrganDonationPledge[]>([]);
+
+  React.useEffect(() => {
+    fetch("/api/organ/pledge")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.pledges) setPledges(data.pledges);
+      })
+      .catch(() => {});
+  }, [submittedPledge]);
 
   const availableOrgans = [
     "Corneas (Eyes)",
@@ -393,6 +405,61 @@ export default function OrganDonationPage() {
           </form>
         )}
       </div>
+
+      {/* Community Awareness Pledges Display */}
+      {pledges.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-700" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Community Awareness Pledges (अंगदान जागरूकता संकल्प)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Voluntary pledges registered by compassionate citizens across India.
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200 self-start sm:self-auto">
+              {pledges.length} Citizens Committed
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {pledges.map((plg) => (
+              <div
+                key={plg.id}
+                className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2 hover:border-purple-200 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-full bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center">
+                      {plg.fullName.charAt(0)}
+                    </div>
+                    <span className="text-xs font-bold text-slate-900">{plg.fullName}</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-slate-400" />
+                    <span>{plg.city}, {plg.state}</span>
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {plg.pledgedOrgans.map((organ, idx) => (
+                    <span
+                      key={idx}
+                      className="bg-white text-purple-900 border border-purple-200 text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                    >
+                      {organ}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

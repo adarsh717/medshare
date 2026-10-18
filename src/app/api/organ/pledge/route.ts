@@ -3,6 +3,16 @@ import { dataStore } from "@/lib/data/store";
 import { getCurrentUser } from "@/lib/auth/session";
 import { organPledgeSchema } from "@/lib/validations";
 
+export async function GET() {
+  try {
+    const pledges = await dataStore.getOrganPledges();
+    return NextResponse.json({ pledges, total: pledges.length });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -18,12 +28,24 @@ export async function POST(req: NextRequest) {
     const data = parsed.data;
     const user = await getCurrentUser();
 
+    // Persist pledge in store
+    const pledge = await dataStore.createOrganPledge({
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      city: data.city,
+      state: data.state,
+      pledgedOrgans: data.pledgedOrgans,
+      declarationAcknowledged: true,
+    });
+
     // Log the pledge in audit log
     await dataStore.createAuditLog({
       userId: user?.id,
       userEmail: data.email,
       action: "ORGAN_DONATION_PLEDGE_EXPRESSION",
       entityType: "organ_pledge",
+      entityId: pledge.id,
       details: {
         pledgedOrgans: data.pledgedOrgans,
         city: data.city,
