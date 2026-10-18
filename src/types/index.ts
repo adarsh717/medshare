@@ -251,6 +251,13 @@ export interface MedicineClaimRequest {
   doctorRegNo?: string;
   prescriptionUrl: string;
   notes?: string;
+  adminNotes?: string;
+  sellerName?: string;
+  sellerContact?: string;
+  locality?: string;
+  city?: string;
+  mrpPrice?: number;
+  offeredPrice?: number;
   status: ClaimVerificationStatus;
   reviewedBy?: string;
   reviewedAt?: string;

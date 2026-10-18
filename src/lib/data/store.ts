@@ -532,6 +532,79 @@ class MedShareDataStore {
       this.surplusMedicines.set(med.id, med);
     });
 
+    // Seed Demo Medicine Claims (Prescription exchange tracking)
+    const demoClaim1: MedicineClaimRequest = {
+      id: "clm-demo-001",
+      listingId: "med-001",
+      listingTitle: "Augmentin 625 Duo (Amoxicillin 500mg + Clavulanic Acid 125mg)",
+      requesterId: demoPatient.id,
+      requesterName: demoPatient.fullName,
+      requesterPhone: demoPatient.phoneNumber || "+91-9876543211",
+      patientName: "Arun Verma",
+      doctorName: "Dr. Sanjeev Grover",
+      doctorRegNo: "DMC-45129",
+      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-augmentin-verma.pdf",
+      notes: "Sinusitis infection course prescribed for 5 days. Requesting sealed strip.",
+      status: "pending_verification",
+      sellerName: "Rahul Gupta",
+      sellerContact: "+91-9876543210",
+      locality: "Hauz Khas",
+      city: "New Delhi",
+      mrpPrice: 204,
+      offeredPrice: 102,
+      createdAt: "2026-10-18T10:00:00.000Z",
+    };
+    this.medicineClaims.set(demoClaim1.id, demoClaim1);
+
+    const demoClaim2: MedicineClaimRequest = {
+      id: "clm-demo-002",
+      listingId: "med-002",
+      listingTitle: "Januvia 100mg (Sitagliptin Phosphate 100mg)",
+      requesterId: demoPatient.id,
+      requesterName: demoPatient.fullName,
+      requesterPhone: demoPatient.phoneNumber || "+91-9876543211",
+      patientName: "Meena Verma",
+      doctorName: "Dr. Ananya Ray",
+      doctorRegNo: "DMC-78901",
+      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-januvia-ray.pdf",
+      notes: "Ongoing monthly diabetes refill for elderly mother.",
+      status: "approved",
+      adminNotes: "Prescription verified with state medical register. Doctor license active. Safe for patient collection.",
+      reviewedBy: "Dr. Vikramaditya (Admin Officer)",
+      reviewedAt: "2026-10-18T11:30:00.000Z",
+      sellerName: "Pooja Sharma",
+      sellerContact: "+91-9876543212",
+      locality: "South Extension",
+      city: "New Delhi",
+      mrpPrice: 380,
+      offeredPrice: 190,
+      createdAt: "2026-10-17T14:00:00.000Z",
+    };
+    this.medicineClaims.set(demoClaim2.id, demoClaim2);
+
+    const demoClaim3: MedicineClaimRequest = {
+      id: "clm-demo-003",
+      listingId: "gkp-001",
+      listingTitle: "Azithral 500 (Azithromycin 500mg)",
+      requesterId: "usr-patient-02",
+      requesterName: "Rohan Desai",
+      requesterPhone: "+91-9876543214",
+      patientName: "Suresh Desai",
+      doctorName: "Dr. P. K. Srivastava",
+      doctorRegNo: "UPMC-12490",
+      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-azithral-gkp.pdf",
+      notes: "Acute respiratory tract infection prescription from BRD Medical College Gorakhpur.",
+      status: "pending_verification",
+      sellerName: "Aakash Singh",
+      sellerContact: "+91-9450123401",
+      locality: "Golghar",
+      city: "Gorakhpur",
+      mrpPrice: 132,
+      offeredPrice: 66,
+      createdAt: "2026-10-18T12:00:00.000Z",
+    };
+    this.medicineClaims.set(demoClaim3.id, demoClaim3);
+
     // Seed Audit Log
     this.auditLogs.push({
       id: "aud-001",
@@ -687,6 +760,24 @@ class MedShareDataStore {
       type: "request_status",
     });
 
+    // Notify Administrator
+    this.createNotification({
+      userId: "usr-admin-01",
+      title: `New Assistance Request: ${data.category.toUpperCase()}`,
+      message: `${author?.fullName || "User"} requested ${data.category} assistance: "${data.title}" in ${data.city}. Requires admin review.`,
+      link: "/dashboard/admin",
+      type: "system",
+    });
+
+    // Record Audit Log
+    this.createAuditLog({
+      userId: data.userId,
+      action: "CREATE_ASSISTANCE_REQUEST",
+      entityType: "assistance_request",
+      entityId: id,
+      details: { title: data.title, category: data.category, city: data.city, priority: data.priority },
+    });
+
     return newReq;
   }
 
@@ -722,6 +813,30 @@ class MedShareDataStore {
 
     // Notify matching voluntary donors (non-blocking notification generation)
     this.notifyMatchingDonors(newReq, bloodDetail);
+
+    // Notify Administrator of emergency blood appeal
+    this.createNotification({
+      userId: "usr-admin-01",
+      title: `Emergency Blood Request: ${data.bloodDetails.bloodGroup}`,
+      message: `${author?.fullName || "Patient"} requested ${data.bloodDetails.unitsNeeded} unit(s) of ${data.bloodDetails.bloodGroup} at ${data.bloodDetails.hospitalName}, ${data.request.city}.`,
+      link: "/dashboard/admin",
+      type: "system",
+    });
+
+    // Record Audit Log
+    this.createAuditLog({
+      userId: data.request.userId,
+      action: "CREATE_BLOOD_REQUEST",
+      entityType: "blood_request",
+      entityId: reqId,
+      details: {
+        bloodGroup: data.bloodDetails.bloodGroup,
+        hospital: data.bloodDetails.hospitalName,
+        city: data.request.city,
+        unitsNeeded: data.bloodDetails.unitsNeeded,
+        urgency: data.bloodDetails.urgencyLevel,
+      },
+    });
 
     return newReq;
   }
@@ -1282,27 +1397,44 @@ class MedShareDataStore {
     const id = `claim-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const now = new Date().toISOString();
 
+    const listing = this.surplusMedicines.get(data.listingId);
+
     const claim: MedicineClaimRequest = {
       ...data,
       id,
+      sellerName: data.sellerName || listing?.sellerName,
+      sellerContact: data.sellerContact || listing?.sellerContact,
+      locality: data.locality || listing?.locality,
+      city: data.city || listing?.city,
+      mrpPrice: data.mrpPrice !== undefined ? data.mrpPrice : listing?.mrpPrice,
+      offeredPrice: data.offeredPrice !== undefined ? data.offeredPrice : listing?.offeredPrice,
       status: "pending_verification",
       createdAt: now,
     };
 
     this.medicineClaims.set(id, claim);
 
-    // Notify seller
-    const listing = this.surplusMedicines.get(data.listingId);
+    // 1. Notify Seller
     if (listing) {
       this.createNotification({
         userId: listing.userId,
         title: `Prescription Claim for ${listing.medicineName}`,
-        message: `${data.requesterName} uploaded a prescription requesting "${listing.medicineName}". Please review the prescription to coordinate transfer.`,
+        message: `${data.requesterName} uploaded a prescription requesting "${listing.medicineName}". MedShare Admin will verify prescription authenticity before final exchange.`,
         link: `/dashboard/requests`,
         type: "request_status",
       });
     }
 
+    // 2. Notify Administrator of pending prescription claim review
+    this.createNotification({
+      userId: "usr-admin-01",
+      title: "Medicine Claim Awaiting Review",
+      message: `${data.patientName || data.requesterName} submitted a prescription claim for "${claim.listingTitle}". Doctor: Dr. ${data.doctorName} (Reg: ${data.doctorRegNo || "N/A"}). Please review & approve.`,
+      link: "/dashboard/admin",
+      type: "system",
+    });
+
+    // 3. Record Audit Log
     this.createAuditLog({
       userId: data.requesterId,
       action: "SUBMIT_MEDICINE_PRESCRIPTION_CLAIM",
@@ -1310,8 +1442,10 @@ class MedShareDataStore {
       entityId: id,
       details: {
         listingId: data.listingId,
+        listingTitle: claim.listingTitle,
         patientName: data.patientName,
         doctorName: data.doctorName,
+        doctorRegNo: data.doctorRegNo,
         prescriptionUrl: data.prescriptionUrl,
       },
     });
@@ -1333,24 +1467,130 @@ class MedShareDataStore {
   async updateMedicineClaimStatus(
     claimId: string,
     status: ClaimVerificationStatus,
-    reviewedBy?: string
+    reviewedBy?: string,
+    adminNotes?: string
   ): Promise<MedicineClaimRequest | null> {
     const claim = this.medicineClaims.get(claimId);
     if (!claim) return null;
     claim.status = status;
     claim.reviewedBy = reviewedBy;
     claim.reviewedAt = new Date().toISOString();
+    if (adminNotes) {
+      claim.adminNotes = adminNotes;
+    }
     this.medicineClaims.set(claimId, claim);
 
+    const listing = this.surplusMedicines.get(claim.listingId);
+
     if (status === "approved") {
-      const listing = this.surplusMedicines.get(claim.listingId);
       if (listing) {
         listing.status = "reserved";
         this.surplusMedicines.set(listing.id, listing);
       }
+
+      // Notify Claimant that claim was approved and provide unmasked seller details
+      this.createNotification({
+        userId: claim.requesterId,
+        title: `✅ Medicine Claim Approved: ${claim.listingTitle}`,
+        message: `Your prescription for ${claim.listingTitle} has been verified and approved by Admin. Seller: ${claim.sellerName || listing?.sellerName} (${claim.sellerContact || listing?.sellerContact}), Location: ${claim.locality || listing?.locality}, ${claim.city || listing?.city}. You may now contact the seller to collect your medicine.`,
+        link: `/dashboard/requests`,
+        type: "request_status",
+      });
+
+      // Notify Seller that prescription has been officially cleared
+      if (listing) {
+        this.createNotification({
+          userId: listing.userId,
+          title: `Prescription Verified: ${claim.listingTitle}`,
+          message: `Admin has verified the prescription uploaded by ${claim.requesterName} (${claim.requesterPhone}). You may safely coordinate medicine handover.`,
+          link: `/dashboard/requests`,
+          type: "request_status",
+        });
+      }
+
+      // Record Audit Log
+      this.createAuditLog({
+        userId: reviewedBy,
+        action: "APPROVE_MEDICINE_CLAIM",
+        entityType: "medicine_claim",
+        entityId: claimId,
+        details: {
+          listingId: claim.listingId,
+          listingTitle: claim.listingTitle,
+          patientName: claim.patientName,
+          requesterId: claim.requesterId,
+          adminNotes,
+          reviewedBy,
+        },
+      });
+    } else if (status === "rejected") {
+      // Revert listing to available if it was reserved
+      if (listing && listing.status === "reserved") {
+        listing.status = "available";
+        this.surplusMedicines.set(listing.id, listing);
+      }
+
+      // Notify Claimant of rejection with reason
+      this.createNotification({
+        userId: claim.requesterId,
+        title: `❌ Medicine Claim Not Approved: ${claim.listingTitle}`,
+        message: `Your prescription claim for ${claim.listingTitle} was not approved.${adminNotes ? ` Remarks: ${adminNotes}` : ""}`,
+        link: `/dashboard/requests`,
+        type: "request_status",
+      });
+
+      // Record Audit Log
+      this.createAuditLog({
+        userId: reviewedBy,
+        action: "REJECT_MEDICINE_CLAIM",
+        entityType: "medicine_claim",
+        entityId: claimId,
+        details: {
+          listingId: claim.listingId,
+          listingTitle: claim.listingTitle,
+          patientName: claim.patientName,
+          requesterId: claim.requesterId,
+          adminNotes,
+          reviewedBy,
+        },
+      });
+    } else if (status === "completed") {
+      if (listing) {
+        listing.status = "claimed";
+        this.surplusMedicines.set(listing.id, listing);
+      }
+
+      // Notify Claimant that claim is completed
+      this.createNotification({
+        userId: claim.requesterId,
+        title: `🎉 Medicine Handover Completed: ${claim.listingTitle}`,
+        message: `Your medicine claim for ${claim.listingTitle} has been marked completed. Thank you for utilizing MedShare verified surplus medicine exchange!`,
+        link: `/dashboard/requests`,
+        type: "request_status",
+      });
+
+      // Record Audit Log
+      this.createAuditLog({
+        userId: reviewedBy,
+        action: "COMPLETE_MEDICINE_CLAIM",
+        entityType: "medicine_claim",
+        entityId: claimId,
+        details: {
+          listingId: claim.listingId,
+          listingTitle: claim.listingTitle,
+          patientName: claim.patientName,
+          requesterId: claim.requesterId,
+          adminNotes,
+          reviewedBy,
+        },
+      });
     }
 
     return claim;
+  }
+
+  async getMedicineClaimById(claimId: string): Promise<MedicineClaimRequest | null> {
+    return this.medicineClaims.get(claimId) || null;
   }
 }
 

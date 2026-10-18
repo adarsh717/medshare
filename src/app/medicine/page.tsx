@@ -149,7 +149,7 @@ export default function MedicineExchangePage() {
       toast({
         type: "success",
         title: "Prescription Claim Submitted",
-        description: `Your request for ${selectedListing.medicineName} has been forwarded to ${selectedListing.sellerName} for verification.`,
+        description: `Your claim for ${selectedListing.medicineName} has been forwarded to the Admin team for prescription verification. Track status in Dashboard > My Requests.`,
       });
 
       setSelectedListing(null);

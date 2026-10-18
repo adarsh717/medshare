@@ -10,6 +10,8 @@ import {
   ArrowRight,
   PlusCircle,
   Bell,
+  Pill,
+  Percent,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { dataStore } from "@/lib/data/store";
@@ -29,6 +31,7 @@ export default async function DashboardPage() {
 
   // Fetch real user data
   const { requests: myRequests } = await dataStore.getRequests({ userId: user.id, limit: 5 });
+  const myClaims = await dataStore.getMedicineClaims(undefined, user.id);
   const notifications = await dataStore.getUserNotifications(user.id);
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -40,6 +43,8 @@ export default async function DashboardPage() {
     (r) => r.status !== "resolved" && r.status !== "closed"
   ).length;
   const resolvedRequestsCount = myRequests.filter((r) => r.status === "resolved").length;
+  const pendingClaimsCount = myClaims.filter((c) => c.status === "pending_verification").length;
+  const approvedClaimsCount = myClaims.filter((c) => c.status === "approved").length;
 
   return (
     <DashboardLayout currentUser={user} unreadCount={unreadCount}>
@@ -51,11 +56,26 @@ export default async function DashboardPage() {
         />
 
         {/* Real Summary Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-1">
             <span className="text-xs text-slate-500 font-medium">My Active Requests</span>
             <div className="text-2xl font-bold text-slate-900">{activeRequestsCount}</div>
             <span className="text-[11px] text-slate-400">Currently in progress</span>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-1">
+            <span className="text-xs text-slate-500 font-medium">Medicine Claims</span>
+            <div className="text-2xl font-bold text-teal-800">{myClaims.length}</div>
+            <Link
+              href="/dashboard/requests?tab=claims"
+              className="text-[11px] text-teal-700 hover:underline font-medium block"
+            >
+              {pendingClaimsCount > 0
+                ? `${pendingClaimsCount} pending verification &rarr;`
+                : approvedClaimsCount > 0
+                ? `${approvedClaimsCount} approved & ready &rarr;`
+                : "Track claims &rarr;"}
+            </Link>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-1">
@@ -201,6 +221,79 @@ export default async function DashboardPage() {
                       View
                     </Button>
                   </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Medicine Claims Section */}
+        <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <Pill className="h-4 w-4 text-teal-700" />
+                <h2 className="text-sm font-bold text-slate-900">My Medicine Claims (50% Off Surplus)</h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Surplus medicines claimed with uploaded doctor prescription.
+              </p>
+            </div>
+            <Link href="/dashboard/requests?tab=claims">
+              <Button variant="ghost" size="sm" className="text-xs text-teal-700">
+                <span>View All & Track</span>
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+
+          {myClaims.length === 0 ? (
+            <div className="text-center py-8 space-y-3">
+              <p className="text-xs text-slate-500">
+                You have not claimed any surplus medicines yet. Genuine sealed leftover medicines are listed at 50% discount.
+              </p>
+              <div className="flex justify-center gap-2">
+                <Link href="/medicine">
+                  <Button variant="primary" size="sm" className="gap-1.5">
+                    <Percent className="h-3.5 w-3.5" />
+                    <span>Browse 50% Off Medicines</span>
+                  </Button>
+                </Link>
+                <Link href="/medicine/list">
+                  <Button variant="outline" size="sm">
+                    List Leftover Medicine
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {myClaims.slice(0, 3).map((claim) => (
+                <div key={claim.id} className="py-3 flex items-center justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100">
+                        Prescription Claim
+                      </span>
+                      <StatusBadge status={claim.status} variant="status" />
+                    </div>
+                    <h3 className="text-xs font-semibold text-slate-900 truncate">{claim.listingTitle}</h3>
+                    <p className="text-[11px] text-slate-500">
+                      Patient: {claim.patientName} &bull; Claimed on {formatDate(claim.createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right hidden sm:block">
+                      <span className="text-xs font-bold text-emerald-800">₹{claim.offeredPrice}</span>
+                      <span className="text-[10px] text-slate-400 block line-through">₹{claim.mrpPrice}</span>
+                    </div>
+                    <Link href="/dashboard/requests?tab=claims">
+                      <Button variant="outline" size="sm" className="text-xs">
+                        Track Status
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

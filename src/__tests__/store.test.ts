@@ -116,4 +116,75 @@ describe("MedShare Data Access & Store Business Logic", () => {
     const logs = await dataStore.getAuditLogs(10);
     expect(logs.some((l) => l.action === "REVIEW_PROVIDER_VERIFICATION")).toBe(true);
   });
+
+  it("should create medicine prescription claim and trigger admin approval pipeline with audit logging", async () => {
+    const claim = await dataStore.createMedicineClaim({
+      listingId: "med-001",
+      listingTitle: "Augmentin 625 Duo (Amoxicillin 500mg)",
+      requesterId: "usr-patient-01",
+      requesterName: "Arun Verma",
+      requesterPhone: "+91-9876543211",
+      patientName: "Arun Verma",
+      doctorName: "Dr. Sanjeev Grover",
+      doctorRegNo: "DMC-45129",
+      prescriptionUrl: "https://documents.medshare.org/prescriptions/rx-augmentin-verma.pdf",
+      notes: "Sinusitis course prescribed.",
+    });
+
+    expect(claim.id).toBeDefined();
+    expect(claim.status).toBe("pending_verification");
+    expect(claim.sellerName).toBeDefined();
+    expect(claim.sellerContact).toBeDefined();
+
+    // Verify audit log recorded
+    const logs = await dataStore.getAuditLogs(10);
+    expect(logs.some((l) => l.action === "SUBMIT_MEDICINE_PRESCRIPTION_CLAIM" && l.entityId === claim.id)).toBe(true);
+
+    // Verify Admin receives notification for approval request
+    const adminNotifs = await dataStore.getUserNotifications("usr-admin-01");
+    expect(adminNotifs.some((n) => n.title.includes("Medicine Claim Awaiting Review"))).toBe(true);
+  });
+
+  it("should approve medicine claim, unmask seller contact, reserve listing, and log audit event", async () => {
+    // Approve demo claim 1
+    const approved = await dataStore.updateMedicineClaimStatus(
+      "clm-demo-001",
+      "approved",
+      "Dr. Vikramaditya (Admin Officer)",
+      "Prescription valid and verified."
+    );
+
+    expect(approved?.status).toBe("approved");
+    expect(approved?.reviewedBy).toBe("Dr. Vikramaditya (Admin Officer)");
+
+    // Listing is now reserved
+    const listing = await dataStore.getSurplusMedicineById("med-001");
+    expect(listing?.status).toBe("reserved");
+
+    // Claimant receives notification with unmasked seller details
+    const claimantNotifs = await dataStore.getUserNotifications("usr-patient-01");
+    const approvalNotif = claimantNotifs.find((n) => n.title.includes("Claim Approved"));
+    expect(approvalNotif).toBeDefined();
+    expect(approvalNotif?.message).toContain("Rahul Gupta");
+
+    // Audit log recorded
+    const logs = await dataStore.getAuditLogs(10);
+    expect(logs.some((l) => l.action === "APPROVE_MEDICINE_CLAIM" && l.entityId === "clm-demo-001")).toBe(true);
+  });
+
+  it("should reject medicine claim with remarks, release reserved listing, and log audit event", async () => {
+    const rejected = await dataStore.updateMedicineClaimStatus(
+      "clm-demo-003",
+      "rejected",
+      "Admin Officer",
+      "Prescription expired."
+    );
+
+    expect(rejected?.status).toBe("rejected");
+    expect(rejected?.adminNotes).toBe("Prescription expired.");
+
+    // Audit log recorded
+    const logs = await dataStore.getAuditLogs(10);
+    expect(logs.some((l) => l.action === "REJECT_MEDICINE_CLAIM" && l.entityId === "clm-demo-003")).toBe(true);
+  });
 });

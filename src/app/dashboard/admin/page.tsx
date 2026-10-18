@@ -20,8 +20,12 @@ export default async function AdminPage() {
   const donors = await dataStore.getVoluntaryDonors();
   const { total: totalResources } = await dataStore.getResources({ limit: 1 });
   const submissions = await dataStore.getVerificationSubmissions();
-  const auditLogs = await dataStore.getAuditLogs(30);
-  const { requests: moderationRequests } = await dataStore.getRequests({ limit: 15 });
+  const claims = await dataStore.getMedicineClaims();
+  const auditLogs = await dataStore.getAuditLogs(100);
+  const { requests: moderationRequests } = await dataStore.getRequests({ limit: 50 });
+
+  const pendingClaims = claims.filter((c) => c.status === "pending_verification").length;
+  const pendingSubmissions = submissions.filter((s) => s.status === "pending").length;
 
   return (
     <DashboardLayout currentUser={user} unreadCount={0}>
@@ -31,9 +35,11 @@ export default async function AdminPage() {
           totalBloodRequests,
           totalDonors: donors.length,
           totalResources,
-          pendingSubmissions: submissions.filter((s) => s.status === "pending").length,
+          pendingSubmissions,
+          pendingClaims,
         }}
         initialSubmissions={submissions}
+        initialClaims={claims}
         initialRequests={moderationRequests}
         initialLogs={auditLogs}
       />

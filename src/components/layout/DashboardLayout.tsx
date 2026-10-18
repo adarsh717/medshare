@@ -38,7 +38,7 @@ export function DashboardLayout({
       exact: true,
     },
     {
-      label: "My Requests",
+      label: "My Requests & Claims",
       href: "/dashboard/requests",
       icon: FileText,
     },

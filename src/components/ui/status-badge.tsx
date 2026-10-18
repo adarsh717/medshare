@@ -108,6 +108,22 @@ export function StatusBadge({ status, variant = "status", className }: StatusBad
         colorClasses = "bg-slate-100 text-slate-600 border-slate-200";
         label = "Unavailable";
         break;
+      case "pending_verification":
+        colorClasses = "bg-amber-50 text-amber-800 border-amber-300 font-semibold";
+        label = "Pending Admin Verification";
+        break;
+      case "approved":
+        colorClasses = "bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold";
+        label = "Verified & Approved";
+        break;
+      case "completed":
+        colorClasses = "bg-blue-50 text-blue-800 border-blue-300 font-semibold";
+        label = "Completed";
+        break;
+      case "rejected":
+        colorClasses = "bg-rose-50 text-rose-800 border-rose-300 font-medium";
+        label = "Verification Declined";
+        break;
     }
   }
 
