@@ -67,8 +67,8 @@ export default function CreateAssistanceRequestPage() {
 
       toast({
         type: "success",
-        title: "Assistance Request Created",
-        description: "Your request has been registered and is under review.",
+        title: "Assistance Request Approved! 🎉",
+        description: "Your request is approved! Dedicated Case Officer Helpline: +91-800-MEDSHARE / +91-9876543210. Logistics are active.",
       });
 
       router.push("/dashboard/requests");
@@ -98,9 +98,9 @@ export default function CreateAssistanceRequestPage() {
         title="Request Medical or Equipment Assistance"
         description="Submit requirements for wheelchair loans, mobility devices, or guidance accessing hospital welfare funds."
         badge={
-          <span className="bg-blue-50 text-blue-800 text-xs px-2.5 py-0.5 rounded border border-blue-200 font-semibold inline-flex items-center gap-1">
-            <Activity className="h-3.5 w-3.5" />
-            Support Requisition
+          <span className="bg-sky-50 text-sky-800 text-xs px-2.5 py-0.5 rounded border border-sky-200 font-semibold inline-flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5 text-sky-600" />
+            Medical & Mobility Support
           </span>
         }
       />
@@ -196,7 +196,13 @@ export default function CreateAssistanceRequestPage() {
               Cancel
             </Button>
           </Link>
-          <Button variant="primary" size="md" type="submit" isLoading={isSubmitting}>
+          <Button
+            variant="primary"
+            size="md"
+            type="submit"
+            isLoading={isSubmitting}
+            className="bg-sky-600 hover:bg-sky-700 text-white border-sky-600 shadow-2xs font-semibold"
+          >
             Submit Assistance Request
           </Button>
         </div>

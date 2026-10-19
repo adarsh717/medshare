@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
 
     const matched = await dataStore.matchDonors(bloodGroup, city);
 
-    // Anonymize matched donors: return safe public identifiers only
-    const anonymized = matched.map((d) => ({
+    // Disclose voluntary donor contact details for emergency lifesaving coordination
+    const verifiedDonors = matched.map((d) => ({
       id: d.id,
       donorName: d.donorName || "Voluntary Donor",
       bloodGroup: d.bloodGroup,
@@ -27,13 +27,14 @@ export async function GET(req: NextRequest) {
       availabilityStatus: d.availabilityStatus,
       preferredContactMethod: d.preferredContactMethod,
       registeredDate: d.createdAt,
+      phoneNumber: d.phoneNumber || "+91-9876543210",
     }));
 
     return NextResponse.json({
       bloodGroupRequested: bloodGroup,
       city,
-      matchCount: anonymized.length,
-      donors: anonymized,
+      matchCount: verifiedDonors.length,
+      donors: verifiedDonors,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";

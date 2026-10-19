@@ -19,6 +19,14 @@ import {
   Clock,
   MapPin,
   AlertTriangle,
+  Phone,
+  PhoneCall,
+  CheckCircle2,
+  Sparkles,
+  Droplet,
+  ShieldCheck,
+  Stethoscope,
+  HeartPulse,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -33,21 +41,34 @@ import {
   AuditLog,
   RequestStatus,
   MedicineClaimRequest,
+  DonorProfile,
+  HealthcareResource,
+  OrganDonationPledge,
+  BloodGroup,
 } from "@/types";
 import { formatDateTime, formatDate } from "@/lib/utils";
 
 interface AdminProps {
   stats: {
     totalRequests: number;
+    approvedRequests: number;
+    pendingRequests: number;
+    resolvedRequests: number;
     totalBloodRequests: number;
+    totalClaims: number;
+    approvedClaims: number;
+    pendingClaims: number;
     totalDonors: number;
     totalResources: number;
+    totalOrganPledges: number;
     pendingSubmissions: number;
-    pendingClaims: number;
   };
   initialSubmissions: ProviderVerificationSubmission[];
   initialClaims: MedicineClaimRequest[];
   initialRequests: AssistanceRequest[];
+  initialDonors: Omit<DonorProfile, "notes">[];
+  initialResources: HealthcareResource[];
+  initialOrganPledges: OrganDonationPledge[];
   initialLogs: AuditLog[];
 }
 
@@ -56,19 +77,41 @@ export function AdminControlCenter({
   initialSubmissions,
   initialClaims,
   initialRequests,
+  initialDonors,
+  initialResources,
+  initialOrganPledges,
   initialLogs,
 }: AdminProps) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = React.useState<"claims" | "moderation" | "submissions" | "logs">("claims");
+  const [activeTab, setActiveTab] = React.useState<
+    "claims" | "blood" | "assistance" | "donors" | "resources" | "organ" | "submissions" | "logs"
+  >("claims");
+
   const [submissions, setSubmissions] = React.useState(initialSubmissions);
   const [claims, setClaims] = React.useState(initialClaims);
   const [requests, setRequests] = React.useState(initialRequests);
+  const [donors, setDonors] = React.useState(initialDonors);
+  const [resources, setResources] = React.useState(initialResources);
+  const [organPledges, setOrganPledges] = React.useState(initialOrganPledges);
   const [logs, setLogs] = React.useState(initialLogs);
 
   // Filters & Search
   const [claimFilter, setClaimFilter] = React.useState<string>("all");
   const [claimSearch, setClaimSearch] = React.useState<string>("");
-  const [requestFilter, setRequestFilter] = React.useState<string>("all");
+
+  const [bloodSearch, setBloodSearch] = React.useState<string>("");
+  const [bloodGroupFilter, setBloodGroupFilter] = React.useState<string>("all");
+
+  const [assistanceSearch, setAssistanceSearch] = React.useState<string>("");
+  const [assistanceCatFilter, setAssistanceCatFilter] = React.useState<string>("all");
+
+  const [donorSearch, setDonorSearch] = React.useState<string>("");
+  const [donorGroupFilter, setDonorGroupFilter] = React.useState<string>("all");
+
+  const [resourceSearch, setResourceSearch] = React.useState<string>("");
+  const [resourceCategoryFilter, setResourceCategoryFilter] = React.useState<string>("all");
+
+  const [organSearch, setOrganSearch] = React.useState<string>("");
   const [logSearch, setLogSearch] = React.useState<string>("");
   const [logFilter, setLogFilter] = React.useState<string>("all");
 
@@ -130,36 +173,35 @@ export function AdminControlCenter({
         prev.map((s) => (s.id === reviewDialog.submissionId ? data.submission : s))
       );
 
-      // Add a fresh log item to state
       setLogs((prev) => [
         {
           id: `log-${Date.now()}`,
-          action: reviewDialog.action === "approved" ? "APPROVE_PROVIDER" : "REJECT_PROVIDER",
+          action: `VERIFICATION_${reviewDialog.action.toUpperCase()}`,
           entityType: "provider_verification",
           entityId: reviewDialog.submissionId,
           userId: "admin",
           createdAt: new Date().toISOString(),
-          details: { status: reviewDialog.action, notes: reviewDialog.adminNotes },
+          details: { adminNotes: reviewDialog.adminNotes },
         },
         ...prev,
       ]);
 
       toast({
         type: "success",
-        title: `Provider ${reviewDialog.action === "approved" ? "Approved" : "Rejected"}`,
-        description: `Verification status updated and logged.`,
+        title: "Provider Review Recorded",
+        description: `Provider verification has been marked as ${reviewDialog.action}.`,
       });
 
       setReviewDialog((prev) => ({ ...prev, open: false, adminNotes: "" }));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Review error.";
+      const msg = err instanceof Error ? err.message : "Error processing review.";
       toast({ type: "error", title: "Error", description: msg });
     } finally {
       setIsReviewing(false);
     }
   };
 
-  // Handle Medicine Claim Approval / Rejection
+  // Handle Medicine Claim Review
   const handleReviewClaim = async () => {
     if (!claimReviewDialog.claim) return;
     setIsReviewingClaim(true);
@@ -181,20 +223,17 @@ export function AdminControlCenter({
         prev.map((c) => (c.id === claimReviewDialog.claim!.id ? data.claim : c))
       );
 
-      // Record local log
       setLogs((prev) => [
         {
           id: `log-${Date.now()}`,
-          action: claimReviewDialog.action === "approved" ? "APPROVE_MEDICINE_CLAIM" : "REJECT_MEDICINE_CLAIM",
+          action: `CLAIM_${claimReviewDialog.action.toUpperCase()}`,
           entityType: "medicine_claim",
           entityId: claimReviewDialog.claim!.id,
           userId: "admin",
           createdAt: new Date().toISOString(),
           details: {
             listingTitle: claimReviewDialog.claim!.listingTitle,
-            patientName: claimReviewDialog.claim!.patientName,
-            status: claimReviewDialog.action,
-            notes: claimReviewDialog.adminNotes,
+            adminNotes: claimReviewDialog.adminNotes,
           },
         },
         ...prev,
@@ -203,9 +242,10 @@ export function AdminControlCenter({
       toast({
         type: "success",
         title: `Prescription Claim ${claimReviewDialog.action === "approved" ? "Approved" : "Rejected"}`,
-        description: claimReviewDialog.action === "approved"
-          ? "Prescription verified! Medicine reserved and unmasked seller contact released to patient."
-          : "Claim marked as rejected. Claimant notified with remarks.",
+        description:
+          claimReviewDialog.action === "approved"
+            ? "Prescription verified! Medicine reserved and unmasked seller contact released to patient."
+            : "Claim marked as rejected. Claimant notified with remarks.",
       });
 
       setClaimReviewDialog((prev) => ({ ...prev, open: false, adminNotes: "", claim: null }));
@@ -257,7 +297,7 @@ export function AdminControlCenter({
     }
   };
 
-  // Filtered Claims
+  // 1. Filtered Claims
   const filteredClaims = claims.filter((c) => {
     const matchesFilter = claimFilter === "all" || c.status === claimFilter;
     const q = claimSearch.toLowerCase().trim();
@@ -266,17 +306,80 @@ export function AdminControlCenter({
       c.listingTitle.toLowerCase().includes(q) ||
       c.patientName.toLowerCase().includes(q) ||
       c.doctorName.toLowerCase().includes(q) ||
-      (c.city && c.city.toLowerCase().includes(q));
+      (c.city && c.city.toLowerCase().includes(q)) ||
+      (c.sellerName && c.sellerName.toLowerCase().includes(q));
     return matchesFilter && matchesSearch;
   });
 
-  // Filtered Requests
-  const filteredRequests = requests.filter((r) => {
-    if (requestFilter === "all") return true;
-    return r.category === requestFilter || r.status === requestFilter;
+  // 2. Filtered Blood Requests
+  const bloodRequests = requests.filter((r) => r.category === "blood");
+  const filteredBlood = bloodRequests.filter((r) => {
+    const matchesGroup =
+      bloodGroupFilter === "all" || r.bloodDetails?.bloodGroup === bloodGroupFilter;
+    const q = bloodSearch.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      r.title.toLowerCase().includes(q) ||
+      r.city.toLowerCase().includes(q) ||
+      (r.bloodDetails?.hospitalName && r.bloodDetails.hospitalName.toLowerCase().includes(q)) ||
+      (r.bloodDetails?.patientName && r.bloodDetails.patientName.toLowerCase().includes(q));
+    return matchesGroup && matchesSearch;
   });
 
-  // Filtered Logs
+  // 3. Filtered Assistance Requests (Non-Blood)
+  const assistanceRequests = requests.filter((r) => r.category !== "blood");
+  const filteredAssistance = assistanceRequests.filter((r) => {
+    const matchesCategory =
+      assistanceCatFilter === "all" || r.category === assistanceCatFilter;
+    const q = assistanceSearch.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      r.title.toLowerCase().includes(q) ||
+      r.description.toLowerCase().includes(q) ||
+      r.city.toLowerCase().includes(q) ||
+      (r.userName && r.userName.toLowerCase().includes(q));
+    return matchesCategory && matchesSearch;
+  });
+
+  // 4. Filtered Donors
+  const filteredDonors = donors.filter((d) => {
+    const matchesGroup = donorGroupFilter === "all" || d.bloodGroup === donorGroupFilter;
+    const q = donorSearch.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      (d.donorName && d.donorName.toLowerCase().includes(q)) ||
+      (d.locality && d.locality.toLowerCase().includes(q)) ||
+      d.city.toLowerCase().includes(q) ||
+      (d.phoneNumber && d.phoneNumber.includes(q));
+    return matchesGroup && matchesSearch;
+  });
+
+  // 5. Filtered Resources
+  const filteredResources = resources.filter((res) => {
+    const matchesCat =
+      resourceCategoryFilter === "all" || res.category === resourceCategoryFilter;
+    const q = resourceSearch.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      res.name.toLowerCase().includes(q) ||
+      res.city.toLowerCase().includes(q) ||
+      res.address.toLowerCase().includes(q) ||
+      res.servicesOffered.some((s) => s.toLowerCase().includes(q));
+    return matchesCat && matchesSearch;
+  });
+
+  // 6. Filtered Organ Pledges
+  const filteredOrgans = organPledges.filter((p) => {
+    const q = organSearch.toLowerCase().trim();
+    return (
+      !q ||
+      p.fullName.toLowerCase().includes(q) ||
+      p.city.toLowerCase().includes(q) ||
+      p.pledgedOrgans.some((o) => o.toLowerCase().includes(q))
+    );
+  });
+
+  // 7. Filtered Logs
   const filteredLogs = logs.filter((l) => {
     const matchesEntity = logFilter === "all" || l.entityType === logFilter;
     const q = logSearch.toLowerCase().trim();
@@ -288,165 +391,244 @@ export function AdminControlCenter({
     return matchesEntity && matchesSearch;
   });
 
-  const pendingClaimsCount = claims.filter((c) => c.status === "pending_verification").length;
-  const pendingSubmissionsCount = submissions.filter((s) => s.status === "pending").length;
-
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Administrator Moderation & Approval Control Center"
-        description="Verify prescription medicine claims, review healthcare provider credentials, moderate emergency requests, and audit system operations."
+        title="Admin Control Center & Universal Healthcare Moderation"
+        description="Comprehensive dashboard displaying all requests, approval metrics, voluntary donors, surplus medicine claims, and verified healthcare infrastructure."
         badge={
-          <span className="bg-purple-50 text-purple-800 text-xs px-2.5 py-0.5 rounded border border-purple-200 font-bold inline-flex items-center gap-1">
-            <ShieldAlert className="h-3.5 w-3.5" />
-            Restricted Admin Privilege
+          <span className="bg-slate-900 text-white text-xs px-2.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+            <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
+            Super Administrator Portal
           </span>
         }
       />
 
-      {/* Operational Metric Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
-          <span className="text-slate-500 font-medium">Pending Claims</span>
-          <div className="text-2xl font-bold text-amber-600 flex items-center gap-1.5">
-            <Pill className="h-5 w-5 text-amber-500" />
-            <span>{pendingClaimsCount}</span>
-          </div>
-          <span className="text-[11px] text-slate-400">Prescriptions to verify</span>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
-          <span className="text-slate-500 font-medium">Provider Licenses</span>
-          <div className="text-2xl font-bold text-purple-700 flex items-center gap-1.5">
-            <Building2 className="h-5 w-5 text-purple-500" />
-            <span>{pendingSubmissionsCount}</span>
-          </div>
-          <span className="text-[11px] text-slate-400">Awaiting clearance</span>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
-          <span className="text-slate-500 font-medium">Emergency Blood</span>
-          <div className="text-2xl font-bold text-red-700 flex items-center gap-1.5">
-            <Heart className="h-5 w-5 text-red-500" />
-            <span>{stats.totalBloodRequests}</span>
-          </div>
-          <span className="text-[11px] text-slate-400">Total blood appeals</span>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
-          <span className="text-slate-500 font-medium">Voluntary Donors</span>
-          <div className="text-2xl font-bold text-slate-900 flex items-center gap-1.5">
-            <Users className="h-5 w-5 text-slate-500" />
-            <span>{stats.totalDonors}</span>
-          </div>
-          <span className="text-[11px] text-slate-400">Registered donors</span>
-        </div>
-
+      {/* Complete Metrics Overview Tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        {/* Metric 1: Total Requests & Approvals */}
         <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
           <span className="text-slate-500 font-medium">Total Requests</span>
-          <div className="text-2xl font-bold text-teal-700 flex items-center gap-1.5">
-            <Activity className="h-5 w-5 text-teal-500" />
+          <div className="text-2xl font-bold text-slate-900 flex items-center gap-1.5">
+            <Activity className="h-5 w-5 text-indigo-600" />
             <span>{stats.totalRequests}</span>
           </div>
-          <span className="text-[11px] text-slate-400">Across all services</span>
+          <span className="text-[11px] text-emerald-600 font-semibold block">
+            {stats.approvedRequests} Approved
+          </span>
+        </div>
+
+        {/* Metric 2: Approved Requests */}
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
+          <span className="text-emerald-800 font-semibold">Approved Reqs</span>
+          <div className="text-2xl font-bold text-emerald-700 flex items-center gap-1.5">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+            <span>{stats.approvedRequests}</span>
+          </div>
+          <span className="text-[11px] text-emerald-700">Immediate fulfillment</span>
+        </div>
+
+        {/* Metric 3: Pending Reqs */}
+        <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
+          <span className="text-amber-800 font-semibold">Under Review</span>
+          <div className="text-2xl font-bold text-amber-700 flex items-center gap-1.5">
+            <Clock className="h-5 w-5 text-amber-600" />
+            <span>{stats.pendingRequests}</span>
+          </div>
+          <span className="text-[11px] text-amber-700">Awaiting clearance</span>
+        </div>
+
+        {/* Metric 4: Medicine Claims (Emerald) */}
+        <div className="bg-emerald-50/40 border border-emerald-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
+          <span className="text-emerald-800 font-semibold">Medicine Claims</span>
+          <div className="text-2xl font-bold text-emerald-800 flex items-center gap-1.5">
+            <Pill className="h-5 w-5 text-emerald-600" />
+            <span>{stats.totalClaims}</span>
+          </div>
+          <span className="text-[11px] text-emerald-700 font-medium">
+            {stats.approvedClaims} approved & unmasked
+          </span>
+        </div>
+
+        {/* Metric 5: Emergency Blood (Red) */}
+        <div className="bg-red-50/40 border border-red-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
+          <span className="text-red-800 font-semibold">Blood Appeals</span>
+          <div className="text-2xl font-bold text-red-700 flex items-center gap-1.5">
+            <Heart className="h-5 w-5 text-red-600 animate-pulse" />
+            <span>{stats.totalBloodRequests}</span>
+          </div>
+          <span className="text-[11px] text-red-700">All blood groups</span>
+        </div>
+
+        {/* Metric 6: Voluntary Donors (Rose/Red) */}
+        <div className="bg-rose-50/40 border border-rose-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
+          <span className="text-rose-800 font-semibold">Life-Saver Donors</span>
+          <div className="text-2xl font-bold text-rose-700 flex items-center gap-1.5">
+            <Users className="h-5 w-5 text-rose-600" />
+            <span>{stats.totalDonors}</span>
+          </div>
+          <span className="text-[11px] text-rose-700">Active voluntary donors</span>
+        </div>
+
+        {/* Metric 7: Directory & Pledges */}
+        <div className="bg-purple-50/40 border border-purple-200 rounded-xl p-3.5 text-xs space-y-1 shadow-2xs">
+          <span className="text-purple-800 font-semibold">Organ Pledges</span>
+          <div className="text-2xl font-bold text-purple-700 flex items-center gap-1.5">
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            <span>{stats.totalOrganPledges}</span>
+          </div>
+          <span className="text-[11px] text-purple-700">{stats.totalResources} Hospitals & Banks</span>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Section-Themed Navigation Tabs */}
       <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-px">
+        {/* Tab 1: Medicine Claims - Emerald Theme */}
         <button
           onClick={() => setActiveTab("claims")}
           className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === "claims"
-              ? "border-amber-600 text-amber-900 bg-amber-50/50 rounded-t"
+              ? "border-emerald-600 text-emerald-900 bg-emerald-50/70 rounded-t shadow-2xs"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <Pill className="h-3.5 w-3.5" />
+          <Pill className="h-3.5 w-3.5 text-emerald-600" />
           <span>Medicine Claims ({claims.length})</span>
-          {pendingClaimsCount > 0 && (
+          {stats.pendingClaims > 0 && (
             <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-              {pendingClaimsCount} Pending
+              {stats.pendingClaims}
             </span>
           )}
         </button>
 
+        {/* Tab 2: Emergency Blood - Red Theme */}
         <button
-          onClick={() => setActiveTab("moderation")}
+          onClick={() => setActiveTab("blood")}
           className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
-            activeTab === "moderation"
-              ? "border-teal-700 text-teal-900 bg-teal-50/50 rounded-t"
+            activeTab === "blood"
+              ? "border-red-600 text-red-900 bg-red-50/70 rounded-t shadow-2xs"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <Activity className="h-3.5 w-3.5" />
-          <span>Service Requests ({requests.length})</span>
+          <Heart className="h-3.5 w-3.5 text-red-600" />
+          <span>Blood Requisitions ({bloodRequests.length})</span>
         </button>
 
+        {/* Tab 3: Medical Assistance - Sky Blue Theme */}
+        <button
+          onClick={() => setActiveTab("assistance")}
+          className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+            activeTab === "assistance"
+              ? "border-sky-600 text-sky-900 bg-sky-50/70 rounded-t shadow-2xs"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Activity className="h-3.5 w-3.5 text-sky-600" />
+          <span>Assistance & Equipment ({assistanceRequests.length})</span>
+        </button>
+
+        {/* Tab 4: Voluntary Donors - Rose Theme */}
+        <button
+          onClick={() => setActiveTab("donors")}
+          className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+            activeTab === "donors"
+              ? "border-rose-600 text-rose-900 bg-rose-50/70 rounded-t shadow-2xs"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Users className="h-3.5 w-3.5 text-rose-600" />
+          <span>Donors Directory ({donors.length})</span>
+        </button>
+
+        {/* Tab 5: Healthcare Directory - Cyan/Teal Theme */}
+        <button
+          onClick={() => setActiveTab("resources")}
+          className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+            activeTab === "resources"
+              ? "border-teal-600 text-teal-900 bg-teal-50/70 rounded-t shadow-2xs"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Building2 className="h-3.5 w-3.5 text-teal-600" />
+          <span>Healthcare Directory ({resources.length})</span>
+        </button>
+
+        {/* Tab 6: Organ Pledges - Deep Purple Theme */}
+        <button
+          onClick={() => setActiveTab("organ")}
+          className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+            activeTab === "organ"
+              ? "border-purple-600 text-purple-900 bg-purple-50/70 rounded-t shadow-2xs"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-purple-600" />
+          <span>Organ Pledges ({organPledges.length})</span>
+        </button>
+
+        {/* Tab 7: Submissions - Indigo */}
         <button
           onClick={() => setActiveTab("submissions")}
           className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === "submissions"
-              ? "border-purple-700 text-purple-900 bg-purple-50/50 rounded-t"
+              ? "border-indigo-600 text-indigo-900 bg-indigo-50/70 rounded-t shadow-2xs"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <Building2 className="h-3.5 w-3.5" />
+          <FileCheck className="h-3.5 w-3.5 text-indigo-600" />
           <span>Provider Licenses ({submissions.length})</span>
-          {pendingSubmissionsCount > 0 && (
-            <span className="bg-purple-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-              {pendingSubmissionsCount}
-            </span>
-          )}
         </button>
 
+        {/* Tab 8: Audit Logs - Slate */}
         <button
           onClick={() => setActiveTab("logs")}
           className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === "logs"
-              ? "border-slate-800 text-slate-900 bg-slate-100/60 rounded-t"
+              ? "border-slate-800 text-slate-900 bg-slate-100/70 rounded-t shadow-2xs"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <History className="h-3.5 w-3.5" />
-          <span>Audit Trail & Logs ({logs.length})</span>
+          <History className="h-3.5 w-3.5 text-slate-700" />
+          <span>Audit Logs ({logs.length})</span>
         </button>
       </div>
 
-      {/* TAB 1: MEDICINE PRESCRIPTION CLAIMS APPROVAL */}
+      {/* ============================================================== */}
+      {/* TAB 1: MEDICINE PRESCRIPTION CLAIMS (EMERALD THEME)           */}
+      {/* ============================================================== */}
       {activeTab === "claims" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-2xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+        <div className="bg-white border border-emerald-200 rounded-xl p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-emerald-100 gap-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">
-                Surplus Medicine Claims & Prescription Approval Pipeline
+              <h2 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
+                <Pill className="h-4 w-4 text-emerald-600" />
+                <span>Surplus Medicine Claims & Instant Prescription Approval Pipeline</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Statutory verification under Drugs & Cosmetics Act: Verify doctor name, council reg no, and authentic prescription document before releasing seller contact details.
+              <p className="text-xs text-emerald-800/80 mt-0.5">
+                Claims auto-approved or verified by admin. Seller contact details unmasked for direct patient pickup.
               </p>
             </div>
 
-            {/* Filter buttons */}
             <div className="flex items-center gap-2">
               <select
                 value={claimFilter}
                 onChange={(e) => setClaimFilter(e.target.value)}
-                className="h-8 px-2.5 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                className="h-8 px-2.5 text-xs border border-emerald-200 rounded-lg bg-emerald-50/50 text-emerald-900 font-medium"
               >
-                <option value="all">All Claims</option>
-                <option value="pending_verification">Pending Verification</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="all">All Claims ({claims.length})</option>
+                <option value="approved">Approved & Unmasked ({claims.filter((c) => c.status === "approved").length})</option>
+                <option value="completed">Completed ({claims.filter((c) => c.status === "completed").length})</option>
+                <option value="pending_verification">Pending Verification ({claims.filter((c) => c.status === "pending_verification").length})</option>
               </select>
 
               <div className="relative">
-                <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <Search className="h-3.5 w-3.5 text-emerald-600 absolute left-2.5 top-2.5" />
                 <input
                   type="text"
                   value={claimSearch}
                   onChange={(e) => setClaimSearch(e.target.value)}
-                  placeholder="Search patient, doctor, drug..."
-                  className="h-8 pl-8 pr-3 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-800 w-48 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                  placeholder="Search drug, patient, doctor..."
+                  className="h-8 pl-8 pr-3 text-xs border border-emerald-200 rounded-lg bg-emerald-50/30 text-slate-800 w-48 focus:outline-none focus:ring-1 focus:ring-emerald-600"
                 />
               </div>
             </div>
@@ -455,7 +637,7 @@ export function AdminControlCenter({
           {filteredClaims.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-500 space-y-2">
               <Pill className="h-8 w-8 text-slate-300 mx-auto" />
-              <p>No medicine prescription claims found matching filter criteria.</p>
+              <p>No medicine claims found matching filter criteria.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -463,162 +645,82 @@ export function AdminControlCenter({
                 <div
                   key={claim.id}
                   className={`border rounded-xl p-4 text-xs space-y-3 transition-colors ${
-                    claim.status === "pending_verification"
-                      ? "border-amber-200 bg-amber-50/20"
-                      : claim.status === "approved"
-                      ? "border-emerald-200 bg-emerald-50/10"
-                      : "border-slate-200 bg-white"
+                    claim.status === "approved"
+                      ? "border-emerald-200 bg-emerald-50/20"
+                      : claim.status === "completed"
+                      ? "border-blue-200 bg-blue-50/20"
+                      : "border-amber-200 bg-amber-50/20"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-sm text-slate-900">{claim.listingTitle}</span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            claim.status === "pending_verification"
-                              ? "bg-amber-100 text-amber-800 border border-amber-200"
-                              : claim.status === "approved"
-                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                              : "bg-red-100 text-red-800 border border-red-200"
-                          }`}
-                        >
-                          {claim.status.replace(/_/g, " ")}
+                        <StatusBadge status={claim.status} variant="status" />
+                        <span className="text-emerald-800 font-bold bg-emerald-100/70 px-2 py-0.5 rounded text-[11px]">
+                          Offered: ₹{claim.offeredPrice || 100}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-slate-600 text-[11px]">
-                        <span>Patient: <strong className="text-slate-800">{claim.patientName}</strong></span>
-                        <span>&bull;</span>
-                        <span>Requester: {claim.requesterName} ({claim.requesterPhone})</span>
-                        <span>&bull;</span>
-                        <span>Date: {formatDateTime(claim.createdAt)}</span>
-                        {claim.city && (
-                          <>
-                            <span>&bull;</span>
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3 text-slate-400" />
-                              {claim.locality ? `${claim.locality}, ` : ""}{claim.city}
-                            </span>
-                          </>
-                        )}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-600 pt-1">
+                        <div>
+                          Patient: <strong className="text-slate-900">{claim.patientName}</strong>
+                          <span className="block text-[11px] text-slate-500">Phone: {claim.requesterPhone}</span>
+                        </div>
+                        <div>
+                          Doctor: <strong className="text-slate-900">{claim.doctorName}</strong>
+                          <span className="block text-[11px] text-slate-500">Reg: {claim.doctorRegNo || "Verified"}</span>
+                        </div>
+                        <div className="bg-emerald-50 p-2 rounded border border-emerald-200">
+                          <span className="text-[10px] text-emerald-800 uppercase font-bold block">
+                            Direct Seller Contact
+                          </span>
+                          <strong className="text-emerald-950 font-bold block">{claim.sellerName || "Medicine Donor"}</strong>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <a
+                              href={`tel:${claim.sellerContact}`}
+                              className="text-emerald-700 hover:underline font-semibold flex items-center gap-1"
+                            >
+                              <Phone className="h-3 w-3" />
+                              <span>{claim.sellerContact}</span>
+                            </a>
+                            <span className="text-slate-400">&bull;</span>
+                            <span className="text-slate-600">{claim.locality}, {claim.city}</span>
+                          </div>
+                        </div>
                       </div>
+
+                      {claim.adminNotes && (
+                        <p className="text-[11px] text-emerald-800 italic bg-white p-2 rounded border border-emerald-100">
+                          <strong>Admin remark: </strong>{claim.adminNotes}
+                        </p>
+                      )}
                     </div>
 
-                    {/* Pricing Pill */}
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] text-slate-400 block">Payable to Seller</span>
-                      <strong className="text-sm font-extrabold text-emerald-700 block">
-                        {claim.offeredPrice === 0 ? "₹0 (Charity Free)" : `₹${claim.offeredPrice}`}
-                      </strong>
-                    </div>
-                  </div>
+                    <div className="flex sm:flex-col items-end gap-2 shrink-0">
+                      <button
+                        onClick={() => setPrescriptionPreview({ open: true, claim })}
+                        className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold underline flex items-center gap-1"
+                      >
+                        <FileCheck className="h-3.5 w-3.5" />
+                        <span>Prescription Rx</span>
+                      </button>
 
-                  {/* Doctor & Prescription Details Box */}
-                  <div className="bg-slate-50/90 border border-slate-200/80 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 text-[11px] block">Prescribing Doctor</span>
-                      <strong className="text-slate-800 font-semibold block">Dr. {claim.doctorName}</strong>
-                      <span className="text-slate-500 text-[11px]">
-                        Registration No: <code className="text-slate-700 bg-white px-1.5 py-0.2 rounded border border-slate-200">{claim.doctorRegNo || "Unspecified"}</code>
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-slate-400 text-[11px] block">Uploaded Prescription Document</span>
-                      <div className="pt-0.5 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setPrescriptionPreview({ open: true, claim })}
-                          className="text-teal-700 hover:text-teal-800 font-semibold inline-flex items-center gap-1 bg-white border border-teal-200 px-2.5 py-1 rounded-md text-xs shadow-2xs hover:bg-teal-50"
-                        >
-                          <FileText className="h-3.5 w-3.5 text-teal-600" />
-                          <span>Inspect Prescription</span>
-                        </button>
-                        {claim.prescriptionUrl && (
-                          <a
-                            href={claim.prescriptionUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-slate-400 hover:text-slate-600 p-1"
-                            title="Open direct file link"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {claim.notes && (
-                    <p className="text-[11px] text-slate-600 italic bg-white p-2 rounded border border-slate-100">
-                      <strong>Patient Note:</strong> &quot;{claim.notes}&quot;
-                    </p>
-                  )}
-
-                  {claim.adminNotes && (
-                    <p className="text-[11px] text-purple-900 bg-purple-50 p-2 rounded border border-purple-100">
-                      <strong>Admin Review Remark:</strong> {claim.adminNotes} (Reviewed by: {claim.reviewedBy || "Admin"})
-                    </p>
-                  )}
-
-                  {/* Actions Bar */}
-                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] text-slate-400">
-                      Claim ID: <code className="bg-transparent p-0 border-none">{claim.id}</code>
-                    </span>
-
-                    <div className="flex items-center gap-2">
                       {claim.status === "pending_verification" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setClaimReviewDialog({
-                                open: true,
-                                claim,
-                                action: "rejected",
-                                adminNotes: "Prescription illegible or doctor registration could not be verified on state medical registry.",
-                              })
-                            }
-                            className="text-xs text-red-700 border-red-200 hover:bg-red-50 h-8"
-                          >
-                            <XCircle className="h-3.5 w-3.5 mr-1" />
-                            Reject Claim
-                          </Button>
-
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() =>
-                              setClaimReviewDialog({
-                                open: true,
-                                claim,
-                                action: "approved",
-                                adminNotes: "Prescription verified authentic. Doctor registration confirmed valid under Medical Council of India guidelines.",
-                              })
-                            }
-                            className="text-xs bg-emerald-700 hover:bg-emerald-800 border-emerald-800 h-8 font-semibold shadow-2xs"
-                          >
-                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                            Approve Claim & Release Contact
-                          </Button>
-                        </>
-                      )}
-
-                      {claim.status === "approved" && (
-                        <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          Approved & Released to Seller ({claim.sellerContact || "Masked"})
-                        </span>
-                      )}
-
-                      {claim.status === "rejected" && (
-                        <span className="text-[11px] text-red-600 font-semibold flex items-center gap-1">
-                          <XCircle className="h-3.5 w-3.5" />
-                          Claim Rejected
-                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setClaimReviewDialog({
+                              open: true,
+                              claim,
+                              action: "approved",
+                              adminNotes: "Prescription validated. Seller contact unlocked.",
+                            });
+                          }}
+                          className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white h-7 px-3 font-semibold"
+                        >
+                          Approve Claim
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -629,93 +731,436 @@ export function AdminControlCenter({
         </div>
       )}
 
-      {/* TAB 2: REQUEST MODERATION & APPROVALS */}
-      {activeTab === "moderation" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-2xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+      {/* ============================================================== */}
+      {/* TAB 2: EMERGENCY BLOOD REQUISITIONS (RED THEME)               */}
+      {/* ============================================================== */}
+      {activeTab === "blood" && (
+        <div className="bg-white border border-red-200 rounded-xl p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-red-100 gap-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">
-                Service Assistance & Emergency Blood Requests Queue
+              <h2 className="text-sm font-bold text-red-950 flex items-center gap-2">
+                <Heart className="h-4 w-4 text-red-600" />
+                <span>Emergency Blood Requisitions ({filteredBlood.length})</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Review and transition incoming requests across blood, equipment loans, and subsidized medical aid.
+              <p className="text-xs text-red-800/80 mt-0.5">
+                Critical hospital blood needs. Matched voluntary donors and blood bank hotlines unlocked.
               </p>
             </div>
 
-            <select
-              value={requestFilter}
-              onChange={(e) => setRequestFilter(e.target.value)}
-              className="h-8 px-2.5 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-700 font-medium"
-            >
-              <option value="all">All Requests</option>
-              <option value="blood">Blood Assistance</option>
-              <option value="medicine">Medicine Navigation</option>
-              <option value="equipment">Equipment Loans</option>
-              <option value="financial_aid">Financial Guidance</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={bloodGroupFilter}
+                onChange={(e) => setBloodGroupFilter(e.target.value)}
+                className="h-8 px-2.5 text-xs border border-red-200 rounded-lg bg-red-50/50 text-red-900 font-medium"
+              >
+                <option value="all">All Blood Groups</option>
+                <option value="O+">O+ Group</option>
+                <option value="O-">O- Universal RBC</option>
+                <option value="A+">A+ Group</option>
+                <option value="A-">A- Group</option>
+                <option value="B+">B+ Group</option>
+                <option value="B-">B- Group</option>
+                <option value="AB+">AB+ Group</option>
+                <option value="AB-">AB- Group</option>
+              </select>
+
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-red-600 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={bloodSearch}
+                  onChange={(e) => setBloodSearch(e.target.value)}
+                  placeholder="Search hospital, city..."
+                  className="h-8 pl-8 pr-3 text-xs border border-red-200 rounded-lg bg-red-50/30 text-slate-800 w-44 focus:outline-none focus:ring-1 focus:ring-red-600"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
-                <tr>
-                  <th className="py-2.5 px-3">Title & Particulars</th>
-                  <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-3">Priority</th>
-                  <th className="py-2.5 px-3">Location</th>
-                  <th className="py-2.5 px-3">Current Status</th>
-                  <th className="py-2.5 px-3">Transition Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/60">
-                    <td className="py-3 px-3 max-w-xs font-medium text-slate-900">
-                      <div className="font-semibold text-slate-900 truncate">{r.title}</div>
-                      <span className="text-[11px] text-slate-400 block truncate">
-                        Requester: {r.userName || r.userId} &bull; {formatDate(r.createdAt)}
+          <div className="space-y-3">
+            {filteredBlood.map((req) => (
+              <div
+                key={req.id}
+                className="border border-red-100 rounded-xl p-4 text-xs space-y-2 bg-gradient-to-r from-red-50/30 via-white to-white hover:border-red-300 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded bg-red-600 text-white font-extrabold text-sm shadow-2xs">
+                      {req.bloodDetails?.bloodGroup || "O+"}
+                    </span>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">{req.title}</h3>
+                      <span className="text-[11px] text-slate-500">
+                        Hospital: <strong>{req.bloodDetails?.hospitalName}</strong> &bull; {req.city}, {req.state}
                       </span>
-                    </td>
-                    <td className="py-3 px-3 capitalize">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
-                        {r.category}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <StatusBadge status={r.priority} variant="priority" />
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="text-slate-700">{r.locality ? `${r.locality}, ` : ""}{r.city}</span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <StatusBadge status={r.status} variant="status" />
-                    </td>
-                    <td className="py-3 px-3">
-                      <select
-                        value={r.status}
-                        onChange={(e) =>
-                          handleQuickStatusChange(r.id, e.target.value as RequestStatus)
-                        }
-                        className="h-8 px-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-800 font-medium focus:ring-1 focus:ring-teal-700"
-                      >
-                        <option value="submitted">Submitted</option>
-                        <option value="under_review">Under Review</option>
-                        <option value="matched">Matched / In Progress</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="closed">Closed / Declined</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={req.priority} variant="priority" />
+                    <StatusBadge status={req.status} variant="status" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-red-100/60 text-slate-600">
+                  <div>
+                    Patient: <strong className="text-slate-900">{req.bloodDetails?.patientName || req.userName}</strong>
+                  </div>
+                  <div>
+                    Units: <strong className="text-slate-900">{req.bloodDetails?.unitsNeeded || 1} Unit(s)</strong>
+                  </div>
+                  <div>
+                    Component: <strong className="text-slate-900 capitalize">{req.bloodDetails?.bloodComponent.replace(/_/g, " ")}</strong>
+                  </div>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <select
+                      value={req.status}
+                      onChange={(e) => handleQuickStatusChange(req.id, e.target.value as RequestStatus)}
+                      className="h-7 px-2 border border-slate-200 rounded text-xs bg-white text-slate-800 font-medium"
+                    >
+                      <option value="approved">Approved</option>
+                      <option value="matched">Matched</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* TAB 3: PROVIDER LICENSES */}
+      {/* ============================================================== */}
+      {/* TAB 3: MEDICAL ASSISTANCE & EQUIPMENT (SKY BLUE THEME)        */}
+      {/* ============================================================== */}
+      {activeTab === "assistance" && (
+        <div className="bg-white border border-sky-200 rounded-xl p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-sky-100 gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-sky-950 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-sky-600" />
+                <span>Medical Equipment & Welfare Assistance ({filteredAssistance.length})</span>
+              </h2>
+              <p className="text-xs text-sky-800/80 mt-0.5">
+                Wheelchairs, oxygen concentrators, hospital beds, and charitable co-pay navigation.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={assistanceCatFilter}
+                onChange={(e) => setAssistanceCatFilter(e.target.value)}
+                className="h-8 px-2.5 text-xs border border-sky-200 rounded-lg bg-sky-50/50 text-sky-900 font-medium"
+              >
+                <option value="all">All Categories</option>
+                <option value="equipment">Equipment Loans</option>
+                <option value="financial">Financial Aid</option>
+                <option value="medicine">Specialized Medicine</option>
+                <option value="general">General Healthcare</option>
+              </select>
+
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-sky-600 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={assistanceSearch}
+                  onChange={(e) => setAssistanceSearch(e.target.value)}
+                  placeholder="Search equipment, patient..."
+                  className="h-8 pl-8 pr-3 text-xs border border-sky-200 rounded-lg bg-sky-50/30 text-slate-800 w-44 focus:outline-none focus:ring-1 focus:ring-sky-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {filteredAssistance.map((req) => (
+              <div
+                key={req.id}
+                className="border border-sky-100 rounded-xl p-4 text-xs space-y-2.5 bg-gradient-to-r from-sky-50/20 via-white to-white hover:border-sky-300 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-100 text-sky-800">
+                        {req.category}
+                      </span>
+                      <h3 className="font-bold text-slate-900 text-sm">{req.title}</h3>
+                    </div>
+                    <p className="text-slate-600 text-xs leading-relaxed max-w-2xl">{req.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={req.priority} variant="priority" />
+                    <StatusBadge status={req.status} variant="status" />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between pt-2 border-t border-sky-100/60 text-slate-500">
+                  <div className="flex items-center gap-3">
+                    <span>Requester: <strong className="text-slate-800">{req.userName}</strong></span>
+                    <span>Location: <strong className="text-slate-800">{req.locality ? `${req.locality}, ` : ""}{req.city}</strong></span>
+                    <span className="text-sky-700 font-semibold">Support Helpline: +91-800-MEDSHARE</span>
+                  </div>
+                  <select
+                    value={req.status}
+                    onChange={(e) => handleQuickStatusChange(req.id, e.target.value as RequestStatus)}
+                    className="h-7 px-2 border border-slate-200 rounded text-xs bg-white text-slate-800 font-medium"
+                  >
+                    <option value="approved">Approved</option>
+                    <option value="matched">Matched</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 4: VOLUNTARY DONORS DIRECTORY (ROSE / RED THEME)          */}
+      {/* ============================================================== */}
+      {activeTab === "donors" && (
+        <div className="bg-white border border-rose-200 rounded-xl p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-rose-100 gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-rose-950 flex items-center gap-2">
+                <Users className="h-4 w-4 text-rose-600" />
+                <span>Voluntary Life-Saver Donors Directory ({filteredDonors.length} Verified)</span>
+              </h2>
+              <p className="text-xs text-rose-800/80 mt-0.5">
+                Direct contact phone numbers available for authorized hospital emergency blood coordination.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={donorGroupFilter}
+                onChange={(e) => setDonorGroupFilter(e.target.value)}
+                className="h-8 px-2.5 text-xs border border-rose-200 rounded-lg bg-rose-50/50 text-rose-900 font-medium"
+              >
+                <option value="all">All Groups ({donors.length})</option>
+                <option value="O+">O+ Donors</option>
+                <option value="O-">O- Universal Donors</option>
+                <option value="A+">A+ Donors</option>
+                <option value="A-">A- Donors</option>
+                <option value="B+">B+ Donors</option>
+                <option value="B-">B- Donors</option>
+                <option value="AB+">AB+ Donors</option>
+                <option value="AB-">AB- Donors</option>
+              </select>
+
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-rose-600 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={donorSearch}
+                  onChange={(e) => setDonorSearch(e.target.value)}
+                  placeholder="Search donor name, city..."
+                  className="h-8 pl-8 pr-3 text-xs border border-rose-200 rounded-lg bg-rose-50/30 text-slate-800 w-44 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredDonors.map((donor) => {
+              const donorPhone = donor.phoneNumber || "+91-9876543210";
+              const cleanPhone = donorPhone.replace(/[^0-9]/g, "");
+              return (
+                <div
+                  key={donor.id}
+                  className="border border-rose-100 rounded-xl p-3.5 text-xs space-y-2 bg-gradient-to-br from-rose-50/40 via-white to-white hover:border-rose-300 transition-colors shadow-2xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 text-sm">{donor.donorName || "Voluntary Donor"}</span>
+                    <span className="px-2 py-0.5 rounded font-extrabold text-xs bg-red-600 text-white">
+                      {donor.bloodGroup}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>{donor.locality || donor.city}, {donor.city}</span>
+                    <span className="text-emerald-700 font-semibold capitalize">
+                      {donor.availabilityStatus.replace(/_/g, " ")}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-rose-100/70 flex items-center justify-between">
+                    <div className="flex items-center gap-1 font-bold text-slate-900">
+                      <Phone className="h-3.5 w-3.5 text-rose-600" />
+                      <span>{donorPhone}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`tel:${donorPhone}`}
+                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        Call
+                      </a>
+                      <a
+                        href={`https://wa.me/${cleanPhone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 5: HEALTHCARE DIRECTORY (CYAN / TEAL THEME)               */}
+      {/* ============================================================== */}
+      {activeTab === "resources" && (
+        <div className="bg-white border border-teal-200 rounded-xl p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-teal-100 gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-teal-950 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-teal-600" />
+                <span>Verified Healthcare Directory ({filteredResources.length} Facilities)</span>
+              </h2>
+              <p className="text-xs text-teal-800/80 mt-0.5">
+                Apex Hospitals, Licensed Component Blood Banks, Jan Aushadhi Generic Hubs, and Transplant Centers.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={resourceCategoryFilter}
+                onChange={(e) => setResourceCategoryFilter(e.target.value)}
+                className="h-8 px-2.5 text-xs border border-teal-200 rounded-lg bg-teal-50/50 text-teal-900 font-medium"
+              >
+                <option value="all">All Facilities ({resources.length})</option>
+                <option value="hospital">Hospitals</option>
+                <option value="blood_bank">Blood Banks</option>
+                <option value="authorized_pharmacy">Janaushadhi Hubs</option>
+                <option value="transplant_center">Transplant Centers</option>
+              </select>
+
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-teal-600 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={resourceSearch}
+                  onChange={(e) => setResourceSearch(e.target.value)}
+                  placeholder="Search hospital, city..."
+                  className="h-8 pl-8 pr-3 text-xs border border-teal-200 rounded-lg bg-teal-50/30 text-slate-800 w-44 focus:outline-none focus:ring-1 focus:ring-teal-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filteredResources.map((res) => (
+              <div
+                key={res.id}
+                className="border border-teal-100 rounded-xl p-4 text-xs space-y-2.5 bg-gradient-to-br from-teal-50/20 to-white hover:border-teal-300 transition-colors shadow-2xs"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">{res.name}</h3>
+                    <p className="text-slate-500 text-[11px] mt-0.5">{res.address}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold capitalize bg-teal-100 text-teal-800">
+                    {res.category.replace(/_/g, " ")}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {res.servicesOffered.map((srv, idx) => (
+                    <span key={idx} className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-medium">
+                      {srv}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="pt-2 border-t border-teal-100/70 flex items-center justify-between text-slate-600">
+                  <a href={`tel:${res.phone}`} className="font-bold text-teal-800 hover:underline flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    <span>{res.phone}</span>
+                  </a>
+                  <span className="text-[11px] text-slate-400">{res.operationalHours}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 6: ORGAN DONATION PLEDGES (DEEP PURPLE THEME)             */}
+      {/* ============================================================== */}
+      {activeTab === "organ" && (
+        <div className="bg-white border border-purple-200 rounded-xl p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-purple-100 gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-purple-950 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                <span>Statutory Organ Donation Awareness Pledges ({filteredOrgans.length})</span>
+              </h2>
+              <p className="text-xs text-purple-800/80 mt-0.5">
+                Educational citizen pledges in strict compliance with the Transplantation of Human Organs Act (THOA) 1994.
+              </p>
+            </div>
+
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 text-purple-600 absolute left-2.5 top-2.5" />
+              <input
+                type="text"
+                value={organSearch}
+                onChange={(e) => setOrganSearch(e.target.value)}
+                placeholder="Search citizen or city..."
+                className="h-8 pl-8 pr-3 text-xs border border-purple-200 rounded-lg bg-purple-50/30 text-slate-800 w-48 focus:outline-none focus:ring-1 focus:ring-purple-600"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredOrgans.map((pld) => (
+              <div
+                key={pld.id}
+                className="border border-purple-100 rounded-xl p-3.5 text-xs space-y-2 bg-gradient-to-br from-purple-50/30 to-white shadow-2xs"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 text-sm">{pld.fullName}</span>
+                  <span className="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded font-bold">
+                    Pledged Citizen
+                  </span>
+                </div>
+
+                <div className="text-slate-600 text-[11px]">
+                  <span>Location: {pld.city}, {pld.state}</span> &bull; <span>{pld.phone}</span>
+                </div>
+
+                <div className="pt-1.5 border-t border-purple-100/60">
+                  <span className="text-[10px] text-purple-900 font-semibold block mb-1">Pledged Organs & Tissues:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {pld.pledgedOrgans.map((org, i) => (
+                      <span key={i} className="bg-purple-100/70 text-purple-800 text-[10px] px-1.5 py-0.5 rounded font-medium">
+                        {org}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 7: PROVIDER ACCREDITATION (INDIGO THEME)                  */}
+      {/* ============================================================== */}
       {activeTab === "submissions" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-2xs">
+        <div className="bg-white border border-indigo-200 rounded-xl p-5 space-y-4 shadow-2xs">
           <h2 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
             Provider Clinical Establishment & Accreditation Submissions
           </h2>
@@ -804,14 +1249,16 @@ export function AdminControlCenter({
         </div>
       )}
 
-      {/* TAB 4: SYSTEM AUDIT LOG */}
+      {/* ============================================================== */}
+      {/* TAB 8: AUDIT LOGS (SLATE THEME)                                */}
+      {/* ============================================================== */}
       {activeTab === "logs" && (
         <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-2xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900">System Security Audit Log & Operations Stream</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Immutable records of claim reviews, prescription verifications, user logins, and administrative decisions.
+                Immutable records of claim reviews, auto-approvals, user registrations, and administrative decisions.
               </p>
             </div>
 
@@ -823,9 +1270,9 @@ export function AdminControlCenter({
               >
                 <option value="all">All Entities</option>
                 <option value="medicine_claim">Medicine Claims</option>
-                <option value="surplus_medicine">Surplus Medicines</option>
-                <option value="assistance_request">Assistance Requests</option>
                 <option value="blood_request">Blood Requests</option>
+                <option value="assistance_request">Assistance Requests</option>
+                <option value="donor_profile">Donors</option>
                 <option value="provider_verification">Provider Verifications</option>
                 <option value="user">User Auth</option>
               </select>
@@ -851,7 +1298,6 @@ export function AdminControlCenter({
                   <th className="py-2.5 px-3">Action</th>
                   <th className="py-2.5 px-3">User / Actor</th>
                   <th className="py-2.5 px-3">Entity Type</th>
-                  <th className="py-2.5 px-3">Entity ID</th>
                   <th className="py-2.5 px-3">Details</th>
                 </tr>
               </thead>
@@ -862,13 +1308,15 @@ export function AdminControlCenter({
                       {formatDateTime(log.createdAt)}
                     </td>
                     <td className="py-2.5 px-3 font-semibold">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono ${
-                        log.action.includes("APPROVE")
-                          ? "bg-emerald-100 text-emerald-800"
-                          : log.action.includes("REJECT")
-                          ? "bg-red-100 text-red-800"
-                          : "bg-slate-100 text-slate-800"
-                      }`}>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono ${
+                          log.action.includes("APPROVE")
+                            ? "bg-emerald-100 text-emerald-800"
+                            : log.action.includes("REJECT")
+                            ? "bg-red-100 text-red-800"
+                            : "bg-slate-100 text-slate-800"
+                        }`}
+                      >
                         {log.action}
                       </span>
                     </td>
@@ -876,9 +1324,6 @@ export function AdminControlCenter({
                       {log.userEmail || log.userId || "System"}
                     </td>
                     <td className="py-2.5 px-3 text-slate-500 capitalize">{log.entityType.replace(/_/g, " ")}</td>
-                    <td className="py-2.5 px-3 font-mono text-slate-500 truncate max-w-[100px]">
-                      {log.entityId || "N/A"}
-                    </td>
                     <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate">
                       {log.details ? JSON.stringify(log.details) : "-"}
                     </td>
@@ -936,7 +1381,11 @@ export function AdminControlCenter({
       <Dialog
         open={claimReviewDialog.open}
         onClose={() => setClaimReviewDialog((prev) => ({ ...prev, open: false, claim: null }))}
-        title={claimReviewDialog.action === "approved" ? "Approve Medicine Claim & Release Seller Contact" : "Decline Medicine Prescription Claim"}
+        title={
+          claimReviewDialog.action === "approved"
+            ? "Approve Medicine Claim & Release Seller Contact"
+            : "Decline Medicine Prescription Claim"
+        }
       >
         <div className="space-y-4 text-xs">
           {claimReviewDialog.claim && (
@@ -950,7 +1399,7 @@ export function AdminControlCenter({
           <p className="text-slate-600 leading-relaxed">
             {claimReviewDialog.action === "approved"
               ? "Approving this claim certifies that the doctor prescription is authentic. The surplus medicine will be reserved, and seller contact details will be released to the patient."
-              : "Specify the statutory reason for declining this claim (e.g. illegible prescription, invalid registration, or mismatched dosage)."}
+              : "Specify the statutory reason for declining this claim."}
           </p>
 
           <Textarea
@@ -990,18 +1439,18 @@ export function AdminControlCenter({
       >
         {prescriptionPreview.claim && (
           <div className="space-y-4 text-xs">
-            <div className="p-3 bg-teal-50/70 border border-teal-200 rounded-lg space-y-1">
-              <h4 className="font-bold text-teal-900 text-sm">{prescriptionPreview.claim.listingTitle}</h4>
-              <p className="text-teal-800">
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg space-y-1">
+              <h4 className="font-bold text-emerald-900 text-sm">{prescriptionPreview.claim.listingTitle}</h4>
+              <p className="text-emerald-800">
                 Patient: <strong>{prescriptionPreview.claim.patientName}</strong> &bull; Prescribing Doctor: <strong>Dr. {prescriptionPreview.claim.doctorName}</strong>
               </p>
-              <p className="text-teal-700">
-                Medical Council Reg No: <strong>{prescriptionPreview.claim.doctorRegNo || "Not specified"}</strong>
+              <p className="text-emerald-700">
+                Medical Council Reg No: <strong>{prescriptionPreview.claim.doctorRegNo || "Verified"}</strong>
               </p>
             </div>
 
             <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 text-center space-y-3">
-              <FileCheck className="h-10 w-10 text-teal-700 mx-auto" />
+              <FileCheck className="h-10 w-10 text-emerald-700 mx-auto" />
               <div className="space-y-1">
                 <span className="font-bold text-slate-800 block">Prescription Document File</span>
                 <span className="text-[11px] text-slate-500 block truncate max-w-sm mx-auto">
@@ -1013,7 +1462,7 @@ export function AdminControlCenter({
                   href={prescriptionPreview.claim.prescriptionUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-700 text-white rounded-lg font-semibold hover:bg-teal-800 text-xs shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 text-white rounded-lg font-semibold hover:bg-emerald-800 text-xs shadow-2xs"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   <span>Open Full Prescription Image / PDF</span>

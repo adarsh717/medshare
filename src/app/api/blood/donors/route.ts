@@ -55,6 +55,16 @@ export async function POST(req: NextRequest) {
       consentToContact: data.consentToContact,
       lastDonationDate: data.lastDonationDate,
       notes: data.notes,
+      phoneNumber: user.phoneNumber,
+    });
+
+    // Send instant approval notification
+    await dataStore.createNotification({
+      userId: user.id,
+      title: "Voluntary Donor Profile Approved!",
+      message: `Thank you, ${user.fullName}! Your voluntary ${data.bloodGroup} donor profile is now active and approved. You may receive emergency calls from nearby patients.`,
+      link: "/dashboard/donor",
+      type: "verification_update",
     });
 
     // Also update user role to 'donor' if currently 'patient'

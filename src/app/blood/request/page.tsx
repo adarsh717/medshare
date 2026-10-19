@@ -69,8 +69,8 @@ export default function CreateBloodRequestPage() {
 
       toast({
         type: "success",
-        title: "Blood Request Published",
-        description: "Your request has been published. Matching voluntary donors have been notified.",
+        title: "Blood Requisition Approved! 🎉",
+        description: "Your requisition is approved! Compatible voluntary donors and emergency blood bank desks are unlocked.",
       });
 
       router.push(`/blood/requests/${json.request.id}`);
@@ -295,7 +295,13 @@ export default function CreateBloodRequestPage() {
               Cancel
             </Button>
           </Link>
-          <Button variant="primary" size="md" type="submit" isLoading={isSubmitting}>
+          <Button
+            variant="primary"
+            size="md"
+            type="submit"
+            isLoading={isSubmitting}
+            className="bg-red-600 hover:bg-red-700 text-white border-red-600 shadow-2xs font-semibold"
+          >
             Publish Blood Request
           </Button>
         </div>

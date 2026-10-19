@@ -26,6 +26,7 @@ export type RequestStatus =
   | "submitted"
   | "under_review"
   | "additional_info_required"
+  | "approved"
   | "matched"
   | "resolved"
   | "closed";
@@ -71,6 +72,7 @@ export interface DonorProfile {
   updatedAt: string;
   // Anonymized display fields when browsing:
   donorName?: string;
+  phoneNumber?: string;
 }
 
 export interface BloodRequestDetail {

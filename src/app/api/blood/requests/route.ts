@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         state: data.state,
         locality: data.locality,
         priority: data.urgencyLevel,
-        status: "submitted",
+        status: "approved",
         preferredContactMethod: "in_app",
         consentGiven: data.consentGiven,
       },

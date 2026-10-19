@@ -62,14 +62,14 @@ export default function AssistancePortalPage() {
         title="Medical & Equipment Assistance"
         description="Community assistance requests for wheelchair loans, mobility aids, hospital equipment, and charitable healthcare expense navigation."
         badge={
-          <span className="bg-blue-50 text-blue-800 text-xs px-2.5 py-0.5 rounded border border-blue-200 font-semibold inline-flex items-center gap-1">
-            <Activity className="h-3.5 w-3.5" />
-            Patient Care
+          <span className="bg-sky-50 text-sky-800 text-xs px-2.5 py-0.5 rounded border border-sky-200 font-semibold inline-flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5 text-sky-600" />
+            Medical & Mobility Assistance
           </span>
         }
         action={
           <Link href="/assistance/request">
-            <Button variant="primary" size="sm" className="gap-1.5 bg-blue-700 hover:bg-blue-800 border-blue-800">
+            <Button variant="primary" size="sm" className="gap-1.5 bg-sky-600 hover:bg-sky-700 border-sky-600 text-white shadow-2xs">
               <PlusCircle className="h-4 w-4" />
               <span>Submit Assistance Request</span>
             </Button>

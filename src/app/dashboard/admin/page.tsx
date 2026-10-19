@@ -14,17 +14,34 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  // Fetch real data
-  const { total: totalRequests } = await dataStore.getRequests({ limit: 1 });
-  const { total: totalBloodRequests } = await dataStore.getBloodRequests({ limit: 1 });
+  // Fetch real data across all modules
+  const { requests: allRequests, total: totalRequests } = await dataStore.getRequests({ limit: 150 });
+  const { requests: bloodRequests, total: totalBloodRequests } = await dataStore.getBloodRequests({ limit: 150 });
   const donors = await dataStore.getVoluntaryDonors();
-  const { total: totalResources } = await dataStore.getResources({ limit: 1 });
+  const { resources, total: totalResources } = await dataStore.getResources({ limit: 150 });
   const submissions = await dataStore.getVerificationSubmissions();
   const claims = await dataStore.getMedicineClaims();
+  const organPledges = await dataStore.getOrganPledges();
   const auditLogs = await dataStore.getAuditLogs(100);
-  const { requests: moderationRequests } = await dataStore.getRequests({ limit: 50 });
 
-  const pendingClaims = claims.filter((c) => c.status === "pending_verification").length;
+  const approvedRequests = allRequests.filter(
+    (r) => r.status === "approved" || r.status === "matched" || r.status === "resolved"
+  ).length;
+  const pendingRequests = allRequests.filter(
+    (r) => r.status === "submitted" || r.status === "under_review"
+  ).length;
+  const resolvedRequests = allRequests.filter(
+    (r) => r.status === "resolved" || r.status === "closed"
+  ).length;
+
+  const totalClaims = claims.length;
+  const approvedClaims = claims.filter(
+    (c) => c.status === "approved" || c.status === "completed"
+  ).length;
+  const pendingClaims = claims.filter(
+    (c) => c.status === "pending_verification"
+  ).length;
+
   const pendingSubmissions = submissions.filter((s) => s.status === "pending").length;
 
   return (
@@ -32,15 +49,24 @@ export default async function AdminPage() {
       <AdminControlCenter
         stats={{
           totalRequests,
+          approvedRequests,
+          pendingRequests,
+          resolvedRequests,
           totalBloodRequests,
+          totalClaims,
+          approvedClaims,
+          pendingClaims,
           totalDonors: donors.length,
           totalResources,
+          totalOrganPledges: organPledges.length,
           pendingSubmissions,
-          pendingClaims,
         }}
         initialSubmissions={submissions}
         initialClaims={claims}
-        initialRequests={moderationRequests}
+        initialRequests={allRequests}
+        initialDonors={donors}
+        initialResources={resources}
+        initialOrganPledges={organPledges}
         initialLogs={auditLogs}
       />
     </DashboardLayout>

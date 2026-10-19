@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       state: parsed.data.state,
       locality: parsed.data.locality,
       priority: parsed.data.priority,
-      status: "submitted",
+      status: "approved",
       preferredContactMethod: parsed.data.preferredContactMethod,
       consentGiven: parsed.data.consentGiven,
     });

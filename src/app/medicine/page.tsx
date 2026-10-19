@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Tag,
   Check,
+  Phone,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { SearchBar } from "@/components/ui/search-bar";
@@ -29,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/toast";
 import { CardSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SurplusMedicineListing } from "@/types";
+import { SurplusMedicineListing, MedicineClaimRequest } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 export default function MedicineExchangePage() {
@@ -50,6 +51,7 @@ export default function MedicineExchangePage() {
   const [claimNotes, setClaimNotes] = React.useState("");
   const [claimConsent, setClaimConsent] = React.useState(false);
   const [isSubmittingClaim, setIsSubmittingClaim] = React.useState(false);
+  const [approvedClaimModal, setApprovedClaimModal] = React.useState<MedicineClaimRequest | null>(null);
 
   const cities = ["all", "Gorakhpur", "New Delhi", "Mumbai", "Bengaluru", "Chennai", "Kolkata"];
   const categories = [
@@ -146,10 +148,15 @@ export default function MedicineExchangePage() {
         throw new Error(data.error || "Failed to submit prescription claim.");
       }
 
+      // Instant Auto-Approval & Seller Contact Disclosure
+      if (data.claim) {
+        setApprovedClaimModal(data.claim);
+      }
+
       toast({
         type: "success",
-        title: "Prescription Claim Submitted",
-        description: `Your claim for ${selectedListing.medicineName} has been forwarded to the Admin team for prescription verification. Track status in Dashboard > My Requests.`,
+        title: "Prescription Claim Approved! 🎉",
+        description: `Direct contact details for ${data.claim?.sellerName || "seller"} are now unlocked.`,
       });
 
       setSelectedListing(null);
@@ -528,6 +535,78 @@ export default function MedicineExchangePage() {
               </Button>
             </div>
           </form>
+        )}
+      </Dialog>
+
+      {/* Instant Approval & Seller Contact Unlocked Dialog */}
+      <Dialog
+        open={!!approvedClaimModal}
+        onClose={() => setApprovedClaimModal(null)}
+        title="🎉 Prescription Claim Approved & Seller Contact Unlocked"
+      >
+        {approvedClaimModal && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-2">
+              <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Auto-Approved for Direct Pickup</span>
+              </div>
+              <p className="text-emerald-700 leading-relaxed">
+                Your prescription for <strong>{approvedClaimModal.listingTitle}</strong> has been auto-verified.
+                You can now contact the donor/seller directly to arrange collection.
+              </p>
+            </div>
+
+            <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Seller / Donor Name</span>
+                <span className="font-semibold text-slate-900">{approvedClaimModal.sellerName || "Verified Medicine Donor"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Phone Number</span>
+                <span className="font-bold text-emerald-700 text-sm">{approvedClaimModal.sellerContact}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Pickup Locality</span>
+                <span className="font-medium text-slate-800">{approvedClaimModal.locality}, {approvedClaimModal.city}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Discounted Resale Price</span>
+                <span className="font-bold text-slate-900">
+                  ₹{approvedClaimModal.offeredPrice}{" "}
+                  {approvedClaimModal.mrpPrice && (
+                    <span className="line-through text-slate-400 font-normal">₹{approvedClaimModal.mrpPrice}</span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <a
+                href={`tel:${approvedClaimModal.sellerContact}`}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-xs transition-colors shadow-sm"
+              >
+                <Phone className="h-3.5 w-3.5" />
+                <span>Call Seller: {approvedClaimModal.sellerContact}</span>
+              </a>
+              <a
+                href={`https://wa.me/${(approvedClaimModal.sellerContact || "").replace(/[^0-9]/g, "")}?text=Hello%20${encodeURIComponent(approvedClaimModal.sellerName || "Seller")},%20my%20prescription%20claim%20for%20${encodeURIComponent(approvedClaimModal.listingTitle)}%20was%20approved%20on%20MedShare.%20When%20can%20I%20collect%20it%20from%20${encodeURIComponent(approvedClaimModal.locality || "")}?`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded font-semibold text-xs transition-colors"
+              >
+                <span>WhatsApp Seller</span>
+              </a>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setApprovedClaimModal(null)}
+                className="w-full mt-1"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
         )}
       </Dialog>
     </div>

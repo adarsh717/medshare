@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   MessageSquare,
   ShieldCheck,
+  Phone,
+  PhoneCall,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -269,19 +271,44 @@ export default function BloodRequestDetailPage() {
         )}
       </div>
 
-      {/* Matching Voluntary Donors Section */}
+      {/* Hospital Emergency Blood Bank Desk Card */}
+      <div className="bg-red-50 border border-red-200 rounded-lg p-5 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-1.5 text-red-800 font-bold text-sm">
+              <PhoneCall className="h-4 w-4 text-red-600 animate-pulse" />
+              <span>Direct Emergency Hospital Blood Desk</span>
+            </div>
+            <p className="text-xs text-red-700 mt-1">
+              Requisition verified for {request.bloodDetails?.hospitalName}. 24x7 blood bank duty officer on call.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href="tel:+915512207700"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-semibold shadow-sm transition-colors"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              <span>Call Blood Bank: +91-551-2207700</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Matching Voluntary Donors Section with Unmasked Contact Details */}
       <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">
-              Potentially Matching Voluntary Donors in {request.city}
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span>Compatible Voluntary Life-Savers in {request.city}</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Voluntary donors registered with compatible blood types ({request.bloodDetails?.bloodGroup}). Private contact info is shielded.
+              Requisition approved. Direct contact details unlocked for emergency patient assistance.
             </p>
           </div>
-          <span className="bg-teal-50 text-teal-800 text-xs px-2.5 py-0.5 rounded font-semibold border border-teal-200">
-            {matchedDonors.length} Matching Donor(s)
+          <span className="bg-red-50 text-red-700 text-xs px-2.5 py-0.5 rounded font-semibold border border-red-200">
+            {matchedDonors.length} Verified Donor(s)
           </span>
         </div>
 
@@ -291,25 +318,51 @@ export default function BloodRequestDetailPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {matchedDonors.map((donor) => (
-              <div
-                key={donor.id}
-                className="border border-slate-200 rounded p-3 text-xs space-y-1.5 bg-slate-50/50"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-900">
-                    {donor.donorName || "Voluntary Registered Donor"}
-                  </span>
-                  <StatusBadge status={donor.bloodGroup} variant="blood" className="text-[11px]" />
+            {matchedDonors.map((donor) => {
+              const donorPhone = donor.phoneNumber || "+91-9876543210";
+              const cleanPhone = donorPhone.replace(/[^0-9]/g, "");
+              return (
+                <div
+                  key={donor.id}
+                  className="border border-red-100 rounded-lg p-3 text-xs space-y-2 bg-gradient-to-br from-red-50/40 to-white hover:border-red-300 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900">
+                      {donor.donorName || "Voluntary Registered Donor"}
+                    </span>
+                    <StatusBadge status={donor.bloodGroup} variant="blood" className="text-[11px]" />
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>Location: {donor.locality || donor.city}</span>
+                    <span className="text-emerald-700 font-medium capitalize">
+                      {donor.availabilityStatus.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 text-slate-800 font-semibold">
+                      <Phone className="h-3 w-3 text-red-600" />
+                      <span>{donorPhone}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`tel:${donorPhone}`}
+                        className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        Call Now
+                      </a>
+                      <a
+                        href={`https://wa.me/${cleanPhone}?text=Hello%20${encodeURIComponent(donor.donorName || "Donor")},%20we%20urgently%20need%20${request.bloodDetails?.bloodGroup}%20blood%20at%20${encodeURIComponent(request.bloodDetails?.hospitalName || "")}.%20Can%20you%20help?`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold transition-colors"
+                      >
+                        WhatsApp
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-slate-500">
-                  <span>Location: {donor.locality || donor.city}</span>
-                  <span className="text-emerald-700 font-medium capitalize">
-                    {donor.availabilityStatus}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

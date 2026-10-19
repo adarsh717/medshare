@@ -49,7 +49,7 @@ describe("MedShare Data Access & Store Business Logic", () => {
     });
 
     expect(newReq.id).toBeDefined();
-    expect(newReq.status).toBe("submitted");
+    expect(newReq.status).toBe("approved");
 
     // Transition status to matched
     const updated = await dataStore.updateRequestStatus(
@@ -132,17 +132,17 @@ describe("MedShare Data Access & Store Business Logic", () => {
     });
 
     expect(claim.id).toBeDefined();
-    expect(claim.status).toBe("pending_verification");
+    expect(claim.status).toBe("approved");
     expect(claim.sellerName).toBeDefined();
     expect(claim.sellerContact).toBeDefined();
 
     // Verify audit log recorded
     const logs = await dataStore.getAuditLogs(10);
-    expect(logs.some((l) => l.action === "SUBMIT_MEDICINE_PRESCRIPTION_CLAIM" && l.entityId === claim.id)).toBe(true);
+    expect(logs.some((l) => l.action === "AUTO_APPROVE_MEDICINE_CLAIM" && l.entityId === claim.id)).toBe(true);
 
     // Verify Admin receives notification for approval request
     const adminNotifs = await dataStore.getUserNotifications("usr-admin-01");
-    expect(adminNotifs.some((n) => n.title.includes("Medicine Claim Awaiting Review"))).toBe(true);
+    expect(adminNotifs.some((n) => n.title.includes("Medicine Claim Auto-Approved"))).toBe(true);
   });
 
   it("should approve medicine claim, unmask seller contact, reserve listing, and log audit event", async () => {

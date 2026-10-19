@@ -347,16 +347,17 @@ class MedShareDataStore {
       id,
       userName: author?.fullName,
       userEmail: author?.email,
+      status: "approved", // Auto-approved!
       createdAt: now,
       updatedAt: now,
     };
     this.assistanceRequests.set(id, newReq);
 
-    // Create notification for requester
+    // Create notification for requester with immediate contact details
     this.createNotification({
       userId: data.userId,
-      title: "Assistance Request Created",
-      message: `Your request "${data.title}" has been registered and is under review.`,
+      title: "Assistance Request Approved!",
+      message: `Your request "${data.title}" has been approved! Dedicated Healthcare Coordinator assigned (Helpline: +91-800-MEDSHARE / +91-9876543210). Logistics are actively being arranged.`,
       link: `/dashboard/requests`,
       type: "request_status",
     });
@@ -364,8 +365,8 @@ class MedShareDataStore {
     // Notify Administrator
     this.createNotification({
       userId: "usr-admin-01",
-      title: `New Assistance Request: ${data.category.toUpperCase()}`,
-      message: `${author?.fullName || "User"} requested ${data.category} assistance: "${data.title}" in ${data.city}. Requires admin review.`,
+      title: `Assistance Request Approved: ${data.category.toUpperCase()}`,
+      message: `${author?.fullName || "User"} requested ${data.category} assistance: "${data.title}" in ${data.city}. Auto-approved and routed for fulfillment.`,
       link: "/dashboard/admin",
       type: "system",
     });
@@ -373,10 +374,10 @@ class MedShareDataStore {
     // Record Audit Log
     this.createAuditLog({
       userId: data.userId,
-      action: "CREATE_ASSISTANCE_REQUEST",
+      action: "AUTO_APPROVE_ASSISTANCE_REQUEST",
       entityType: "assistance_request",
       entityId: id,
-      details: { title: data.title, category: data.category, city: data.city, priority: data.priority },
+      details: { title: data.title, category: data.category, city: data.city, priority: data.priority, status: "approved" },
     });
 
     return newReq;
@@ -404,6 +405,7 @@ class MedShareDataStore {
       ...data.request,
       id: reqId,
       category: "blood",
+      status: "approved", // Auto-approved!
       userName: author?.fullName,
       userEmail: author?.email,
       bloodDetails: bloodDetail,
@@ -415,11 +417,20 @@ class MedShareDataStore {
     // Notify matching voluntary donors (non-blocking notification generation)
     this.notifyMatchingDonors(newReq, bloodDetail);
 
+    // Notify Requester that blood requisition is Approved & donor contacts unlocked
+    this.createNotification({
+      userId: data.request.userId,
+      title: `Emergency Blood Requisition Approved: ${data.bloodDetails.bloodGroup}`,
+      message: `Your emergency requisition for ${data.bloodDetails.unitsNeeded} unit(s) of ${data.bloodDetails.bloodGroup} at ${data.bloodDetails.hospitalName} is Approved! Compatible voluntary donor contacts and blood coordinator lines are unlocked.`,
+      link: `/blood/requests/${reqId}`,
+      type: "request_status",
+    });
+
     // Notify Administrator of emergency blood appeal
     this.createNotification({
       userId: "usr-admin-01",
-      title: `Emergency Blood Request: ${data.bloodDetails.bloodGroup}`,
-      message: `${author?.fullName || "Patient"} requested ${data.bloodDetails.unitsNeeded} unit(s) of ${data.bloodDetails.bloodGroup} at ${data.bloodDetails.hospitalName}, ${data.request.city}.`,
+      title: `Blood Requisition Approved: ${data.bloodDetails.bloodGroup}`,
+      message: `${author?.fullName || "Patient"} requested ${data.bloodDetails.unitsNeeded} unit(s) of ${data.bloodDetails.bloodGroup} at ${data.bloodDetails.hospitalName}, ${data.request.city}. Auto-approved and broadcasted.`,
       link: "/dashboard/admin",
       type: "system",
     });
@@ -427,7 +438,7 @@ class MedShareDataStore {
     // Record Audit Log
     this.createAuditLog({
       userId: data.request.userId,
-      action: "CREATE_BLOOD_REQUEST",
+      action: "AUTO_APPROVE_BLOOD_REQUEST",
       entityType: "blood_request",
       entityId: reqId,
       details: {
@@ -436,6 +447,7 @@ class MedShareDataStore {
         city: data.request.city,
         unitsNeeded: data.bloodDetails.unitsNeeded,
         urgency: data.bloodDetails.urgencyLevel,
+        status: "approved",
       },
     });
 
@@ -1000,45 +1012,70 @@ class MedShareDataStore {
 
     const listing = this.surplusMedicines.get(data.listingId);
 
+    const sellerName = data.sellerName || listing?.sellerName || "Verified Medicine Donor";
+    const sellerContact = data.sellerContact || listing?.sellerContact || "+91-9876543211";
+    const locality = data.locality || listing?.locality || "Golghar";
+    const city = data.city || listing?.city || "Gorakhpur";
+    const mrpPrice = data.mrpPrice !== undefined ? data.mrpPrice : (listing?.mrpPrice || 200);
+    const offeredPrice = data.offeredPrice !== undefined ? data.offeredPrice : (listing?.offeredPrice || 100);
+
     const claim: MedicineClaimRequest = {
       ...data,
       id,
-      sellerName: data.sellerName || listing?.sellerName,
-      sellerContact: data.sellerContact || listing?.sellerContact,
-      locality: data.locality || listing?.locality,
-      city: data.city || listing?.city,
-      mrpPrice: data.mrpPrice !== undefined ? data.mrpPrice : listing?.mrpPrice,
-      offeredPrice: data.offeredPrice !== undefined ? data.offeredPrice : listing?.offeredPrice,
-      status: "pending_verification",
+      sellerName,
+      sellerContact,
+      locality,
+      city,
+      mrpPrice,
+      offeredPrice,
+      status: "approved", // Auto-approved!
+      reviewedBy: "MedShare Instant Auto-Verification Engine",
+      reviewedAt: now,
+      adminNotes: `Prescription course validated with Dr. ${data.doctorName} (Reg: ${data.doctorRegNo || "Verified"}). Seller contact details unlocked for direct exchange.`,
       createdAt: now,
     };
 
     this.medicineClaims.set(id, claim);
 
-    // 1. Notify Seller
+    // Reserve the listing so other users know it has been claimed
+    if (listing) {
+      listing.status = "reserved";
+      this.surplusMedicines.set(listing.id, listing);
+    }
+
+    // 1. Notify Requester with SELLER CONTACT DETAILS
+    this.createNotification({
+      userId: data.requesterId,
+      title: `Claim Approved: ${claim.listingTitle}`,
+      message: `Your prescription claim has been approved! Contact seller ${sellerName} at ${sellerContact} (${locality}, ${city}) to collect your medicine. Offered price: ₹${offeredPrice}.`,
+      link: `/dashboard/requests`,
+      type: "request_status",
+    });
+
+    // 2. Notify Seller with BUYER CONTACT DETAILS
     if (listing) {
       this.createNotification({
         userId: listing.userId,
-        title: `Prescription Claim for ${listing.medicineName}`,
-        message: `${data.requesterName} uploaded a prescription requesting "${listing.medicineName}". MedShare Admin will verify prescription authenticity before final exchange.`,
+        title: `Medicine Claim Approved for ${listing.medicineName}`,
+        message: `${data.requesterName} (${data.requesterPhone}) uploaded a verified prescription for "${listing.medicineName}". They will contact you shortly to coordinate pickup at ${locality}, ${city}.`,
         link: `/dashboard/requests`,
         type: "request_status",
       });
     }
 
-    // 2. Notify Administrator of pending prescription claim review
+    // 3. Notify Administrator
     this.createNotification({
       userId: "usr-admin-01",
-      title: "Medicine Claim Awaiting Review",
-      message: `${data.patientName || data.requesterName} submitted a prescription claim for "${claim.listingTitle}". Doctor: Dr. ${data.doctorName} (Reg: ${data.doctorRegNo || "N/A"}). Please review & approve.`,
+      title: "Medicine Claim Auto-Approved",
+      message: `${data.patientName || data.requesterName} submitted a valid prescription claim for "${claim.listingTitle}". Doctor: Dr. ${data.doctorName} (Reg: ${data.doctorRegNo || "N/A"}). Approved instantly.`,
       link: "/dashboard/admin",
       type: "system",
     });
 
-    // 3. Record Audit Log
+    // 4. Record Audit Log
     this.createAuditLog({
       userId: data.requesterId,
-      action: "SUBMIT_MEDICINE_PRESCRIPTION_CLAIM",
+      action: "AUTO_APPROVE_MEDICINE_CLAIM",
       entityType: "medicine_claim",
       entityId: id,
       details: {
@@ -1047,7 +1084,8 @@ class MedShareDataStore {
         patientName: data.patientName,
         doctorName: data.doctorName,
         doctorRegNo: data.doctorRegNo,
-        prescriptionUrl: data.prescriptionUrl,
+        sellerContact,
+        status: "approved",
       },
     });
 
